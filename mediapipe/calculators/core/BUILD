@@ -1367,6 +1367,17 @@ cc_library(
     alwayslink = 1,
 )
 
+cc_library(
+    name = "prepare_sign_language_model_input",
+    srcs = ["prepare_sign_laguage_model_input.cc"],
+    deps = [
+       "//mediapipe/framework:calculator_framework",
+       "//mediapipe/framework/formats:landmark_cc_proto",
+       "//mediapipe/framework/formats:matrix",
+    ],
+    alwayslink = 1,
+)
+
 cc_test(
     name = "bypass_calculator_test",
     srcs = ["bypass_calculator_test.cc"],

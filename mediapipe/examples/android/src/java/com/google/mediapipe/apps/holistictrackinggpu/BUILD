@@ -21,7 +21,7 @@ cc_binary(
     linkshared = 1,
     linkstatic = 1,
     deps = [
-        "//mediapipe/graphs/holistic_tracking:holistic_tracking_gpu_deps",
+        "//mediapipe/graphs/sign_language:sign_language_gpu_deps",
         "//mediapipe/java/com/google/mediapipe/framework/jni:mediapipe_framework_jni",
     ],
 )
@@ -36,7 +36,7 @@ android_binary(
     name = "holistictrackinggpu",
     srcs = glob(["*.java"]),
     assets = [
-        "//mediapipe/graphs/holistic_tracking:holistic_tracking_gpu.binarypb",
+        "//mediapipe/graphs/sign_language:sign_language_cpu.binarypb",
         "//mediapipe/modules/face_detection:face_detection_short_range.tflite",
         "//mediapipe/modules/face_landmark:face_landmark.tflite",
         "//mediapipe/modules/hand_landmark:hand_landmark_full.tflite",
@@ -53,7 +53,7 @@ android_binary(
         "appName": "Holistic Tracking",
         "mainActivity": "com.google.mediapipe.apps.basic.MainActivity",
         "cameraFacingFront": "False",
-        "binaryGraphName": "holistic_tracking_gpu.binarypb",
+        "binaryGraphName": "sign_language_cpu.binarypb",
         "inputVideoStreamName": "input_video",
         "outputVideoStreamName": "output_video",
         "flipFramesVertically": "True",

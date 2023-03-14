@@ -1,0 +1,13 @@
+{
+    "files.associations": {
+        "__node_handle": "cpp",
+        "*.ipp": "cpp",
+        "__mutex_base": "cpp",
+        "memory": "cpp",
+        "memory_resource": "cpp",
+        "semaphore": "cpp",
+        "shared_mutex": "cpp",
+        "stop_token": "cpp",
+        "expected": "cpp"
+    }
+}
