@@ -58,7 +58,7 @@ namespace mediapipe
                 matrix(2, i) = landmark.z();
             }
 
-            std::string s = std::to_string(face_landmarks_size);
+            std::string s = std::to_string(face_landmarks.landmark(0).x());
             char const *pchar = s.c_str();
             __android_log_print(ANDROID_LOG_INFO, "sign_language %d ", pchar);
 
@@ -90,7 +90,7 @@ namespace mediapipe
 
 
             // RIGHT_HAND
-            const NormalizedLandmarkList &right_hand_landmarks = cc->Inputs().Tag("POSE_LANDMARKS").Get<NormalizedLandmarkList>();
+            const NormalizedLandmarkList &right_hand_landmarks = cc->Inputs().Tag("RIGHT_HAND_LANDMARKS").Get<NormalizedLandmarkList>();
             int right_hand_landmarks_size = right_hand_landmarks.landmark_size();
 
             for (int i = 0; i < right_hand_landmarks_size; ++i)

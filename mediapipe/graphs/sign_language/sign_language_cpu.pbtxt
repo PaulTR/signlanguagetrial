@@ -7,7 +7,7 @@ input_stream: "input_video"
 output_stream: "output_video"
 
 # Sign classification list
-output_stream: "SIGN_CLASSIFICATION:classifications"
+output_stream: "classifications"
 
 # Throttles the images flowing downstream for flow control. It passes through
 # the very first incoming image unaltered, and waits for downstream nodes
@@ -109,7 +109,7 @@ node {
   output_stream: "CLASSIFICATIONS:classifications"
   options: {
     [mediapipe.TfLiteTensorsToClassificationCalculatorOptions.ext] {
-      min_score_threshold: 0.1
+      min_score_threshold: 0.5
       label_map_path: "mediapipe/models/sign_language_labels.txt"
     }
   }
