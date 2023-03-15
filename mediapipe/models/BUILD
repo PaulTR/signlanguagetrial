@@ -40,3 +40,9 @@ mediapipe_files(
         "ssdlite_object_detection_labelmap.txt",
     ],
 )
+
+exports_files(srcs = [
+    "sign_language.tflite",
+    "sign_language_labels.txt"
+    ]
+)

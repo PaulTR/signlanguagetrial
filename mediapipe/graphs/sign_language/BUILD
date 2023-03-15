@@ -35,6 +35,9 @@ cc_library(
         "//mediapipe/calculators/image:image_properties_calculator",
         "//mediapipe/calculators/util:annotation_overlay_calculator",
         "//mediapipe/modules/holistic_landmark:holistic_landmark_gpu",
+        "//mediapipe/calculators/tflite:tflite_inference_calculator",
+        "//mediapipe/calculators/tflite:tflite_converter_calculator",
+        "//mediapipe/calculators/tflite:tflite_tensors_to_classification_calculator",
     ],
 )
 

@@ -6,6 +6,9 @@ input_stream: "input_video"
 # GPU image with rendered results. (GpuBuffer)
 output_stream: "output_video"
 
+# Sign classification list
+output_stream: "SIGN_CLASSIFICATION:classifications"
+
 # Throttles the images flowing downstream for flow control. It passes through
 # the very first incoming image unaltered, and waits for downstream nodes
 # (calculators and subgraphs) in the graph to finish their tasks before it
@@ -71,6 +74,59 @@ node {
     input_stream: "FACE_LANDMARKS:face_landmarks"
     output_stream: "SIGN_LANGUAGE_MATRIX:sign_language_matrix"
 }
+
+
+# Converts matrix to tensor
+node {
+  calculator: "TfLiteConverterCalculator"
+  input_stream: "MATRIX:sign_language_matrix"
+  output_stream: "TENSORS:sign_language_tensor"
+  node_options: {
+    [type.googleapis.com/mediapipe.TfLiteConverterCalculatorOptions] {
+      zero_center: false
+      max_num_channels: 3
+    }
+   }
+}
+
+# Runs a TensorFlow Lite model on CPU that takes an image tensor and outputs a
+# vector of tensors representing, for instance, detection boxes/keypoints and
+# scores.
+node {
+  calculator: "TfLiteInferenceCalculator"
+  input_stream: "TENSORS:sign_language_tensor"
+  output_stream: "TENSORS:classification_tensors"
+  node_options: {
+    [type.googleapis.com/mediapipe.TfLiteInferenceCalculatorOptions] {
+      model_path: "mediapipe/models/sign_language.tflite"
+    }
+  }
+}
+
+node {
+  calculator: "TfLiteTensorsToClassificationCalculator"
+  input_stream: "TENSORS:classification_tensors"
+  output_stream: "CLASSIFICATIONS:classifications"
+  options: {
+    [mediapipe.TfLiteTensorsToClassificationCalculatorOptions.ext] {
+      min_score_threshold: 0.1
+      label_map_path: "mediapipe/models/sign_language_labels.txt"
+    }
+  }
+}
+
+# Converts Tensor to classification
+# node {
+#   calculator: "TensorsToClassificationCalculator"
+#   input_stream: "TENSORS:classification_tensors"
+#   output_stream: "CLASSIFICATIONS:classifications"
+#   options: {
+#     [mediapipe.TensorsToClassificationCalculatorOptions.ext] {
+#       min_score_threshold: 0.5
+#       label_map_path: "mediapipe/models/sign_language_labels.txt"
+#     }
+#   }
+# }
 
 # Converts pose, hands and face landmarks to a render data vector.
 node {

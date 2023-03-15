@@ -45,6 +45,8 @@ android_binary(
         "//mediapipe/modules/holistic_landmark:hand_recrop.tflite",
         "//mediapipe/modules/pose_detection:pose_detection.tflite",
         "//mediapipe/modules/pose_landmark:pose_landmark_full.tflite",
+        "//mediapipe/models:sign_language.tflite",
+        "//mediapipe/models:sign_language_labels.txt"
     ],
     assets_dir = "",
     manifest = "//mediapipe/examples/android/src/java/com/google/mediapipe/apps/basic:AndroidManifest.xml",
