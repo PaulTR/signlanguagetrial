@@ -17,4 +17,11 @@
             android:gravity="center"
             android:text="@string/no_camera_access" />
     </FrameLayout>
+
+    <TextView
+            android:id="@+id/tv_labels"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:gravity="center"
+            android:text="Labels" />
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -27,11 +27,13 @@ import com.google.mediapipe.framework.PacketGetter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import android.widget.TextView;
 
 public class MainActivity extends com.google.mediapipe.apps.basic.MainActivity {
   private static final String TAG = "MainActivity";
 
   private static final String OUTPUT_CLASSIFICATION_STREAM_NAME = "classifications";
+  private String label = "";
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +47,7 @@ public class MainActivity extends com.google.mediapipe.apps.basic.MainActivity {
     }
 
     AndroidPacketCreator packetCreator = processor.getPacketCreator();
+    TextView tvLabels = (TextView) findViewById(R.id.tv_labels);
 
     // To show verbose logging, run:
     // adb shell setprop log.tag.MainActivity VERBOSE
@@ -52,14 +55,24 @@ public class MainActivity extends com.google.mediapipe.apps.basic.MainActivity {
     processor.addPacketCallback(
         OUTPUT_CLASSIFICATION_STREAM_NAME,
         (packet) -> {
-          Log.v("xxxx>>>", "Received multi-hand landmarks packet.");
+          // Log.v("xxxx>>>", "Received multi-hand landmarks packet.");
           // List<ClassificationList> multiHandLandmarks =
           // PacketGetter.getProtoVector(packet, ClassificationList.parser());
 
           byte[] protoBytes = PacketGetter.getProtoBytes(packet);
           try {
             ClassificationList landmarkList = ClassificationList.parseFrom(protoBytes);
-            Log.v("xxxx>>>", "[TS:" + packet.getTimestamp() + "] "+ landmarkList.getClassification(0));
+            // Log.v("xxxx>>>", "[TS:" + packet.getTimestamp() + "] " +
+            // landmarkList.getClassification(0));
+            // if (landmarkList.size() > 0) {
+              label = landmarkList.getClassification(0).getLabel();
+
+              this.runOnUiThread(new Runnable() {
+                public void run() {
+                  tvLabels.setText("Labels: " + label);
+                }
+              });
+            // }
           } catch (java.lang.Exception e) {
             e.printStackTrace();
           }
