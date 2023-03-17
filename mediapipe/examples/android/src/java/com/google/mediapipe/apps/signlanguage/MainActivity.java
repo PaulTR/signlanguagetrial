@@ -34,6 +34,7 @@ public class MainActivity extends com.google.mediapipe.apps.basic.MainActivity {
 
   private static final String OUTPUT_CLASSIFICATION_STREAM_NAME = "classifications";
   private String label = "";
+  private String score = "";
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -62,16 +63,15 @@ public class MainActivity extends com.google.mediapipe.apps.basic.MainActivity {
           byte[] protoBytes = PacketGetter.getProtoBytes(packet);
           try {
             ClassificationList landmarkList = ClassificationList.parseFrom(protoBytes);
-            // Log.v("xxxx>>>", "[TS:" + packet.getTimestamp() + "] " +
-            // landmarkList.getClassification(0));
+            Log.v("xxxx>>>", "[TS:" + packet.getTimestamp() + "] " + landmarkList.getClassification(0));
             // if (landmarkList.size() > 0) {
-              label = landmarkList.getClassification(0).getLabel();
-
-              this.runOnUiThread(new Runnable() {
-                public void run() {
-                  tvLabels.setText("Labels: " + label);
-                }
-              });
+            label = landmarkList.getClassification(0).getLabel();
+            score = landmarkList.getClassification(0).getScore()+"";
+            this.runOnUiThread(new Runnable() {
+              public void run() {
+                tvLabels.setText("Labels: " + label+" "+ score);
+              }
+            });
             // }
           } catch (java.lang.Exception e) {
             e.printStackTrace();

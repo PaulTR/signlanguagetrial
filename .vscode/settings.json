@@ -8,6 +8,13 @@
         "semaphore": "cpp",
         "shared_mutex": "cpp",
         "stop_token": "cpp",
-        "expected": "cpp"
+        "expected": "cpp",
+        "core": "cpp",
+        "specialfunctions": "cpp",
+        "*.inc": "cpp",
+        "stacktrace": "cpp",
+        "filesystem": "cpp",
+        "stdexcept": "cpp",
+        "string": "cpp"
     }
 }

@@ -60,14 +60,15 @@ node {
 # # Convert landmarksk to matrix
 # node {
 #     calculator: "LandmarksToMatrixCalculator"
-#     input_stream: "LANDMARKS:face_landmarks"
+#     input_stream: "LANDMARKS:pose_landmarks"
 #     input_stream: "IMAGE_SIZE:image_size"
-#     output_stream: "LANDMARKS_MATRIX:landmarks_matrix"
+#     output_stream: "LANDMARKS_MATRIX:pose_matrix"
 # }
 
 # Converts pose, hand and face landmarks to sign language model input
 node {
     calculator: "PrepareSignLanguageModelInputCalculator"
+    input_stream: "IMAGE_SIZE:image_size"
     input_stream: "POSE_LANDMARKS:pose_landmarks"
     input_stream: "LEFT_HAND_LANDMARKS:left_hand_landmarks"
     input_stream: "RIGHT_HAND_LANDMARKS:right_hand_landmarks"
@@ -81,13 +82,14 @@ node {
   calculator: "TfLiteConverterCalculator"
   input_stream: "MATRIX:sign_language_matrix"
   output_stream: "TENSORS:sign_language_tensor"
-  node_options: {
-    [type.googleapis.com/mediapipe.TfLiteConverterCalculatorOptions] {
-      zero_center: false
-      max_num_channels: 3
-    }
-   }
 }
+
+  # node_options: {
+  #   [type.googleapis.com/mediapipe.TfLiteConverterCalculatorOptions] {
+  #     zero_center: false
+  #     max_num_channels: 3
+  #   }
+  #  }
 
 # Runs a TensorFlow Lite model on CPU that takes an image tensor and outputs a
 # vector of tensors representing, for instance, detection boxes/keypoints and

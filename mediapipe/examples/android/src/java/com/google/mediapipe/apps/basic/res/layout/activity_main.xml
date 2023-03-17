@@ -20,6 +20,8 @@
 
     <TextView
             android:id="@+id/tv_labels"
+            android:textSize="30dp"
+            android:textColor="@android:color/holo_red_light"
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"
             android:gravity="center"
