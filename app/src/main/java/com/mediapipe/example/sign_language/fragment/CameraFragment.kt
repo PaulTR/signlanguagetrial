@@ -7,6 +7,7 @@ import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
 import android.content.res.Configuration
 import android.graphics.Bitmap
+import android.graphics.Matrix
 import android.graphics.Point
 import android.graphics.Rect
 import android.os.Bundle
@@ -176,7 +177,7 @@ class CameraFragment : Fragment() {
         signLanguageHelper.createInterpreter(object :
             SignLanguageHelper.SignLanguageListener {
             override fun onResult(results: List<Pair<String, Float>>) {
-                Log.d(">>>","done")
+//                Log.d(">>>","done")
                 activity?.runOnUiThread {
                     adapter.updateResults(results)
                 }
@@ -196,8 +197,8 @@ class CameraFragment : Fragment() {
                         fragmentCameraBinding.btnRecording.getmMaxRadius(),
                         fragmentCameraBinding.btnRecording.getmMinStroke()
                     )
-                    runnable?.let { handler?.postDelayed(it, 80) };
-                    return@setOnTouchListener true;
+                    runnable?.let { handler?.postDelayed(it, 80) }
+                    return@setOnTouchListener true
                 }
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                     isRecording = false
@@ -205,11 +206,11 @@ class CameraFragment : Fragment() {
                         fragmentCameraBinding.btnRecording.getmMinRadius(),
                         fragmentCameraBinding.btnRecording.getmMinStroke()
                     )
-                    stopAnimationOfSquare();
+                    stopAnimationOfSquare()
                     runnable?.let { handler?.removeCallbacks(it) }
                     resetAnimation()
                     runClassification()
-                    return@setOnTouchListener true;
+                    return@setOnTouchListener true
                 }
             }
             return@setOnTouchListener true
@@ -220,7 +221,7 @@ class CameraFragment : Fragment() {
 
             //to make smooth stroke width animation I increase and decrease value step by step
             val random: Int
-            if (!al.isEmpty()) {
+            if (al.isNotEmpty()) {
                 random = al[i++]
                 if (i >= al.size) {
                     for (j in al.indices.reversed()) {
@@ -291,7 +292,7 @@ class CameraFragment : Fragment() {
 //                        recognizeHand(image)
                         if (isRecording) {
                             extractHolistic(image)
-                            Log.d(">>>", "video")
+//                            Log.d(">>>", "video")
                         }
                         image.close()
                     }
@@ -342,10 +343,10 @@ class CameraFragment : Fragment() {
                 .setDuration(settingPopupVisibilityDuration)
         )
         val params: ViewGroup.LayoutParams =
-            fragmentCameraBinding.ivSquare.getLayoutParams()
-        params.height = dpToPx(40f).toInt()
-        params.width = dpToPx(40f).toInt()
-        fragmentCameraBinding.ivSquare.setLayoutParams(params)
+            fragmentCameraBinding.ivSquare.layoutParams
+        params.height = dpToPx(40f)
+        params.width = dpToPx(40f)
+        fragmentCameraBinding.ivSquare.layoutParams = params
         val set = AnimatorSet()
         set.play(
             ObjectAnimator.ofFloat(
@@ -383,10 +384,10 @@ class CameraFragment : Fragment() {
                 .setDuration(settingPopupVisibilityDuration)
         )
         val params: ViewGroup.LayoutParams =
-            fragmentCameraBinding.ivSquare.getLayoutParams()
-        params.width = dpToPx(80f).toInt()
-        params.height = dpToPx(80f).toInt()
-        fragmentCameraBinding.ivSquare.setLayoutParams(params)
+            fragmentCameraBinding.ivSquare.layoutParams
+        params.width = dpToPx(80f)
+        params.height = dpToPx(80f)
+        fragmentCameraBinding.ivSquare.layoutParams = params
         val set1 = AnimatorSet()
         set1.play(
             ObjectAnimator.ofFloat(
@@ -432,25 +433,43 @@ class CameraFragment : Fragment() {
         al.add(35)
         al.add(40)
         al.add(45)
-        //        al.add(50);
-//        al.add(55);
-//        al.add(60);
         fragmentCameraBinding.btnRecording.endAnimation()
     }
 
     private fun runClassification() {
-        Log.d(">>>", "classificatiom")
+//        Log.d(">>>", "classificatiom")
         signLanguageHelper.runInterpreter(inputArray)
     }
 
     private fun extractHolistic(imageProxy: ImageProxy) {
-        Log.d(">>>", "extract")
+//        Log.d(">>>", "extract")
         val bitmapBuffer = Bitmap.createBitmap(
             imageProxy.width, imageProxy.height, Bitmap.Config.ARGB_8888
         )
         imageProxy.use { bitmapBuffer.copyPixelsFromBuffer(imageProxy.planes[0].buffer) }
 
-        val packet = packetCreator.createRgbImageFrame(bitmapBuffer)
+        val matrix = Matrix().apply {
+            // Rotate the frame received from the camera to be in the same direction as it'll be shown
+            postRotate(imageProxy.imageInfo.rotationDegrees.toFloat())
+
+            // flip image since we only support front camera
+            postScale(
+                -1f, 1f, imageProxy.width.toFloat(), imageProxy.height.toFloat()
+            )
+        }
+
+        // Rotate bitmap to match what our model expects
+        val rotatedBitmap = Bitmap.createBitmap(
+            bitmapBuffer,
+            0,
+            0,
+            bitmapBuffer.width,
+            bitmapBuffer.height,
+            matrix,
+            true
+        )
+
+        val packet = packetCreator.createRgbImageFrame(rotatedBitmap)
         graph.addConsumablePacketToInputStream(
             MainActivity.INPUT_VIDEO_STREAM_NAME,
             packet,

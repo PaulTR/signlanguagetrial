@@ -1,7 +1,6 @@
 package com.mediapipe.example.sign_language
 
 import android.content.Context
-import android.util.Log
 import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.support.common.FileUtil
 import java.io.FileInputStream
@@ -25,10 +24,34 @@ class SignLanguageHelper(private val context: Context) {
     }
 
     fun runInterpreter(list: MutableList<Array<FloatArray>>) {
+        // trim the input
+        if (list.isEmpty()) return
+        var newList = list
+        var firstFrame = -1
+        var lastFrame = -1
+        list.forEachIndexed { index, floatArrays ->
+            if (!floatArrays[468][0].isNaN() || !floatArrays[522][0].isNaN()) {
+                if (firstFrame == -1) {
+                    firstFrame = index
+                } else {
+                    lastFrame = index
+                }
+            }
+        }
 
-        // prepare input
+        if (firstFrame != -1 && lastFrame != -1) {
+            if (firstFrame >= 0 && (lastFrame + 1 <= list.size)) {
+                newList = list.subList(firstFrame, lastFrame + 1)
+            }
+        }
         val inputs = HashMap<String, Any>()
-        inputs["inputs"] = list.toTypedArray()
+        if (newList.size < 10) {
+            // prepare input
+            inputs["inputs"] = list.toTypedArray()
+        } else {
+            // prepare input
+            inputs["inputs"] = newList.toTypedArray()
+        }
 
         // prepare output
         val output = FloatArray(250)
@@ -48,30 +71,6 @@ class SignLanguageHelper(private val context: Context) {
                 Pair(associatedAxisLabels[indexThree], order[2]),
             )
         )
-//        "${associatedAxisLabels[indexOne]} (${
-//            String.format(
-//                "%.2f",
-//                order[0]
-//            )
-//        })",
-//        "${associatedAxisLabels[indexTwo]} (${
-//            String.format(
-//                "%.2f",
-//                order[1]
-//            )
-//        })}",
-//        "${associatedAxisLabels[indexThree]} (${
-//            String.format(
-//                "%.2f",
-//                order[2]
-//            )
-//        })}"
-//        Log.d(">>>>: result 1", "${associatedAxisLabels[indexOne]} ${order[0]}")
-//        Log.d(">>>>: result 2", "${associatedAxisLabels[indexTwo]} ${order[1]}")
-//        Log.d(
-//            ">>>>: result 3",
-//            "${associatedAxisLabels[indexThree]} ${order[2]}"
-//        )
     }
 
     fun close() {

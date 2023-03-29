@@ -1,6 +1,7 @@
 package com.mediapipe.example.sign_language.fragment
 
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Bundle
@@ -9,29 +10,29 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.FrameLayout
-import android.widget.VideoView
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.arthenica.ffmpegkit.FFmpegKit
+import com.arthenica.ffmpegkit.FFmpegKitConfig
+import com.google.mediapipe.components.FrameProcessor
 import com.google.mediapipe.framework.AndroidAssetUtil
 import com.google.mediapipe.framework.AndroidPacketCreator
 import com.google.mediapipe.framework.Graph
 import com.google.mediapipe.framework.PacketGetter
 import com.google.mediapipe.glutil.EglManager
 import com.mediapipe.example.sign_language.MainActivity
-import com.mediapipe.example.sign_language.R
 import com.mediapipe.example.sign_language.ResultsAdapter
 import com.mediapipe.example.sign_language.SignLanguageHelper
 import com.mediapipe.example.sign_language.databinding.FragmentGalleryBinding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.util.concurrent.locks.*
 import kotlin.concurrent.withLock
 
@@ -43,6 +44,7 @@ class GalleryFragment : Fragment() {
 
     private val lock = ReentrantLock()
     private val condition = lock.newCondition()
+    private var timePerFrame = SystemClock.uptimeMillis()
     val pickMedia =
         registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
             // Callback is invoked after the user selects a media item or closes the
@@ -68,6 +70,8 @@ class GalleryFragment : Fragment() {
     private var _fragmentGalleryBinding: FragmentGalleryBinding? = null
     private val fragmentGalleryBinding
         get() = _fragmentGalleryBinding!!
+
+    private val frameProcess : FrameProcessor? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -138,57 +142,103 @@ class GalleryFragment : Fragment() {
         signLanguageHelper.close()
     }
 
+//        private fun runHolisticOnVideo(uri: Uri) {
+//        inputArray.clear()
+//        fragmentGalleryBinding.progress.visibility = View.VISIBLE
+//        backgroundScope = CoroutineScope(Dispatchers.IO)
+//        backgroundScope?.launch {
+//
+//            // Load frames from the video.
+//            val retriever = MediaMetadataRetriever()
+//            retriever.setDataSource(requireContext(), uri)
+//            val videoLengthMs =
+//                retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+//                    ?.toLong()
+//
+//            // Note: We need to read width/height from frame instead of getting the width/height
+//            // of the video directly because MediaRetriever returns frames that are smaller than the
+//            // actual dimension of the video file.
+//            val firstFrame = retriever.getFrameAtTime(0)
+//            val width = firstFrame?.width
+//            val height = firstFrame?.height
+//
+//            // If the video is invalid, returns a null
+//            if ((videoLengthMs == null) || (width == null) || (height == null)) return@launch
+//
+//            // Next, we'll get one frame every frameInterval ms
+//            val numberOfFrameToRead =
+//                videoLengthMs.div(MainActivity.VIDEO_INTERVAL_MS)
+//            var time = SystemClock.uptimeMillis()
+//            var frameCount = 0
+//
+//            for (i in 0..numberOfFrameToRead) {
+//                val timestampMs = i * MainActivity.VIDEO_INTERVAL_MS // ms
+//                retriever.getFrameAtTime(
+//                    timestampMs * 1000, // convert from ms to micro-s
+//                    MediaMetadataRetriever.OPTION_CLOSEST
+//                )?.let { frame ->
+//                    // Convert the video frame to ARGB_8888 which is required by the MediaPipe
+//                    val argb8888Frame =
+//                        if (frame.config == Bitmap.Config.ARGB_8888) frame
+//                        else frame.copy(Bitmap.Config.ARGB_8888, false)
+//
+//                    // Convert the input Bitmap object to an MPImage object to run inference
+//                    addNewFrame(argb8888Frame, SystemClock.uptimeMillis())
+//                    frameCount++
+//                    lock.withLock {
+//                        condition.await()
+//                    }
+//                }
+//            }
+//            time = SystemClock.uptimeMillis() - time
+//            Log.d("time consume", "$time   $frameCount")
+//            retriever.release()
+//            // run interpreter
+//            signLanguageHelper.runInterpreter(inputArray)
+//        }
+//    }
+
     private fun runHolisticOnVideo(uri: Uri) {
         inputArray.clear()
         fragmentGalleryBinding.progress.visibility = View.VISIBLE
         backgroundScope = CoroutineScope(Dispatchers.IO)
+        val cacheDir = requireActivity().cacheDir
+        val folder = File(cacheDir.absolutePath + "/sign_frames/")
+        // delete folder and all child images if it is exist and create a new one
+        if (folder.exists()) {
+            folder.deleteRecursively()
+            folder.mkdirs()
+        } else {
+
+            // create folder
+            folder.mkdirs()
+        }
         backgroundScope?.launch {
+            // extract all images from video and save it to cache
+            val inputVideoPath =
+                FFmpegKitConfig.getSafParameterForRead(requireContext(), uri)
+            FFmpegKit.execute("-i " + inputVideoPath + " -vf fps=30 " + cacheDir.absolutePath + "/sign_frames/" + "%04d.jpg")
+//            FFmpegKit.execute("-i " + inputVideoPath + " -c:v mpeg4 file2.mp4")
+//            Log.d(">>>>","Extract done")
+//            -vf fps=30
+            // load all images from cache and convert it bitmap. also run holistic on each image.
+            if (folder.exists()) {
+                val allFiles =
+                    folder.listFiles { pathname -> pathname?.name?.endsWith(".jpg") == true }
 
-            // Load frames from the video.
-            val retriever = MediaMetadataRetriever()
-            retriever.setDataSource(requireContext(), uri)
-            val videoLengthMs =
-                retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
-                    ?.toLong()
-
-            // Note: We need to read width/height from frame instead of getting the width/height
-            // of the video directly because MediaRetriever returns frames that are smaller than the
-            // actual dimension of the video file.
-            val firstFrame = retriever.getFrameAtTime(0)
-            val width = firstFrame?.width
-            val height = firstFrame?.height
-
-            // If the video is invalid, returns a null
-            if ((videoLengthMs == null) || (width == null) || (height == null)) return@launch
-
-            // Next, we'll get one frame every frameInterval ms
-            val numberOfFrameToRead =
-                videoLengthMs.div(MainActivity.VIDEO_INTERVAL_MS)
-            var time = SystemClock.uptimeMillis()
-            var frameCount = 0
-
-            for (i in 0..numberOfFrameToRead) {
-                val timestampMs = i * MainActivity.VIDEO_INTERVAL_MS // ms
-                retriever.getFrameAtTime(
-                    timestampMs * 1000, // convert from ms to micro-s
-                    MediaMetadataRetriever.OPTION_CLOSEST
-                )?.let { frame ->
-                    // Convert the video frame to ARGB_8888 which is required by the MediaPipe
-                    val argb8888Frame =
-                        if (frame.config == Bitmap.Config.ARGB_8888) frame
-                        else frame.copy(Bitmap.Config.ARGB_8888, false)
-
-                    // Convert the input Bitmap object to an MPImage object to run inference
-                    addNewFrame(argb8888Frame, SystemClock.uptimeMillis())
-                    frameCount++
-                    lock.withLock {
-                        condition.await()
+//                Log.d(">>>>","Load all images done")
+                // convert and run holistic
+                allFiles?.forEach {
+                    it.toBitmap()?.let { bitmap ->
+                        timePerFrame += 400
+                        addNewFrame(bitmap, timePerFrame)
+                        lock.withLock {
+                            condition.await()
+                        }
                     }
                 }
             }
-            time = SystemClock.uptimeMillis() - time
-            Log.d("time consume", "$time   $frameCount")
-            retriever.release()
+//            Log.d(">>>>","Run interpreter")
             // run interpreter
             signLanguageHelper.runInterpreter(inputArray)
         }
@@ -199,5 +249,10 @@ class GalleryFragment : Fragment() {
         graph.addConsumablePacketToInputStream(
             MainActivity.INPUT_VIDEO_STREAM_NAME, packet, timeStamp
         )
+//        packet.release()
     }
+}
+
+fun File.toBitmap(): Bitmap? {
+    return BitmapFactory.decodeFile(path)
 }

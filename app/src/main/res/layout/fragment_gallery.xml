@@ -5,9 +5,10 @@
     android:layout_height="match_parent">
 
     <VideoView
+        app:layout_constraintTop_toTopOf="parent"
         android:id="@+id/videoView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:layout_marginTop="?attr/actionBarSize" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
