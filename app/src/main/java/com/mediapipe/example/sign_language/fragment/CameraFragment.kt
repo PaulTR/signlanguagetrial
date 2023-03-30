@@ -46,7 +46,7 @@ import com.mediapipe.example.sign_language.SignLanguageHelper
 import com.mediapipe.example.sign_language.databinding.FragmentCameraBinding
 import java.util.*
 import java.util.concurrent.*
-
+import java.util.concurrent.locks.*
 
 class CameraFragment : Fragment() {
     companion object {
@@ -77,6 +77,7 @@ class CameraFragment : Fragment() {
     private var runnable: Runnable? = null
 
     private var isRecording = false
+    private var isShowHandLandmark = false
 
     // MediaPipe graph
     private lateinit var graph: Graph
@@ -86,6 +87,8 @@ class CameraFragment : Fragment() {
     private val adapter: ResultsAdapter by lazy {
         ResultsAdapter()
     }
+    private var imageWidth = 0
+    private var imageHeight = 0
     override fun onResume() {
         super.onResume()
         // Make sure that all permissions are still present, since the
@@ -99,13 +102,12 @@ class CameraFragment : Fragment() {
 
     override fun onDestroyView() {
         _fragmentCameraBinding = null
-        super.onDestroyView()
-
         // Shut down our background executor
         backgroundExecutor.shutdown()
         backgroundExecutor.awaitTermination(
             Long.MAX_VALUE, TimeUnit.NANOSECONDS
         )
+        super.onDestroyView()
     }
 
     override fun onCreateView(
@@ -136,38 +138,45 @@ class CameraFragment : Fragment() {
             setUpCamera()
         }
 
-        // Create the Hand Gesture Recognition Helper that will handle the
-        // inference
-        backgroundExecutor.execute {
-
-        }
-
         // Attach listeners to UI control widgets
         initButtonRecording()
+        initShowHandLandmarkButton()
         val eglManager = EglManager(null)
-        graph = Graph()
-        graph.loadBinaryGraph(
-            AndroidAssetUtil.getAssetBytes(
-                requireActivity().assets,
-                MainActivity.BINARY_GRAPH_NAME
+        backgroundExecutor.execute {
+            graph = Graph()
+            graph.loadBinaryGraph(
+                AndroidAssetUtil.getAssetBytes(
+                    requireActivity().assets,
+                    MainActivity.BINARY_GRAPH_NAME
+                )
             )
-        )
-        packetCreator = AndroidPacketCreator(graph)
-        graph.setParentGlContext(eglManager.nativeContext)
-        graph.addPacketCallback(MainActivity.OUTPUT_VIDEO_STREAM_NAME) { packet ->
-            val matrixLandmark = PacketGetter.getMatrixData(packet)
-            val rows = PacketGetter.getMatrixRows(packet)
-            val cols = PacketGetter.getMatrixCols(packet)
-            val data = Array(cols) { FloatArray(rows) }
-            val nums = 3
-            for (i in 0 until cols) {
-                data[i][0] = matrixLandmark[i * nums]
-                data[i][1] = matrixLandmark[i * nums + 1]
-                data[i][2] = matrixLandmark[i * nums + 2]
+            packetCreator = AndroidPacketCreator(graph)
+            graph.setParentGlContext(eglManager.nativeContext)
+            graph.addPacketCallback(MainActivity.OUTPUT_VIDEO_STREAM_NAME) { packet ->
+                val matrixLandmark = PacketGetter.getMatrixData(packet)
+                val rows = PacketGetter.getMatrixRows(packet)
+                val cols = PacketGetter.getMatrixCols(packet)
+                val data = Array(cols) { FloatArray(rows) }
+                val nums = 3
+                for (i in 0 until cols) {
+                    data[i][0] = matrixLandmark[i * nums]
+                    data[i][1] = matrixLandmark[i * nums + 1]
+                    data[i][2] = matrixLandmark[i * nums + 2]
+                }
+
+                // add landmark data if user hold recording button
+                if (isRecording) {
+                    inputArray.add(data)
+                }
+
+                fragmentCameraBinding.overlay.setResults(
+                    if (isShowHandLandmark) data else emptyArray(),
+                    imageWidth,
+                    imageHeight
+                )
             }
-            inputArray.add(data)
+            graph.startRunningGraph()
         }
-        graph.startRunningGraph()
 
         fragmentCameraBinding.recyclerviewResults.layoutManager =
             LinearLayoutManager(requireContext())
@@ -177,12 +186,17 @@ class CameraFragment : Fragment() {
         signLanguageHelper.createInterpreter(object :
             SignLanguageHelper.SignLanguageListener {
             override fun onResult(results: List<Pair<String, Float>>) {
-//                Log.d(">>>","done")
                 activity?.runOnUiThread {
                     adapter.updateResults(results)
                 }
             }
         })
+    }
+
+    private fun initShowHandLandmarkButton() {
+        fragmentCameraBinding.switchLandmark.setOnCheckedChangeListener { buttonView, isChecked ->
+            isShowHandLandmark = isChecked
+        }
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -289,11 +303,7 @@ class CameraFragment : Fragment() {
                 // The analyzer can then be assigned to the instance
                 .also {
                     it.setAnalyzer(backgroundExecutor) { image ->
-//                        recognizeHand(image)
-                        if (isRecording) {
-                            extractHolistic(image)
-//                            Log.d(">>>", "video")
-                        }
+                        extractHolistic(image)
                         image.close()
                     }
                 }
@@ -437,12 +447,10 @@ class CameraFragment : Fragment() {
     }
 
     private fun runClassification() {
-//        Log.d(">>>", "classificatiom")
         signLanguageHelper.runInterpreter(inputArray)
     }
 
     private fun extractHolistic(imageProxy: ImageProxy) {
-//        Log.d(">>>", "extract")
         val bitmapBuffer = Bitmap.createBitmap(
             imageProxy.width, imageProxy.height, Bitmap.Config.ARGB_8888
         )
@@ -454,7 +462,10 @@ class CameraFragment : Fragment() {
 
             // flip image since we only support front camera
             postScale(
-                -1f, 1f, imageProxy.width.toFloat(), imageProxy.height.toFloat()
+                -1f,
+                1f,
+                imageProxy.width.toFloat(),
+                imageProxy.height.toFloat()
             )
         }
 
@@ -466,8 +477,14 @@ class CameraFragment : Fragment() {
             bitmapBuffer.width,
             bitmapBuffer.height,
             matrix,
-            true
+            false
         )
+
+        // set width and height at the first time
+        if (imageWidth == 0 && imageHeight == 0) {
+            imageWidth = rotatedBitmap.width
+            imageHeight = rotatedBitmap.height
+        }
 
         val packet = packetCreator.createRgbImageFrame(rotatedBitmap)
         graph.addConsumablePacketToInputStream(
@@ -475,5 +492,6 @@ class CameraFragment : Fragment() {
             packet,
             SystemClock.uptimeMillis()
         )
+        packet.release()
     }
 }

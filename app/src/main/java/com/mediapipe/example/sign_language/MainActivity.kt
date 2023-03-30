@@ -13,7 +13,6 @@ class MainActivity : AppCompatActivity() {
         const val BINARY_GRAPH_NAME = "sign_language_cpu.binarypb"
         const val INPUT_VIDEO_STREAM_NAME = "input_video"
         const val OUTPUT_VIDEO_STREAM_NAME = "sign_language_matrix"
-        const val VIDEO_INTERVAL_MS = 33L
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

@@ -45,7 +45,7 @@ class GalleryFragment : Fragment() {
     private val lock = ReentrantLock()
     private val condition = lock.newCondition()
     private var timePerFrame = SystemClock.uptimeMillis()
-    val pickMedia =
+    private val pickMedia =
         registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
             // Callback is invoked after the user selects a media item or closes the
             // photo picker.
@@ -71,8 +71,6 @@ class GalleryFragment : Fragment() {
     private val fragmentGalleryBinding
         get() = _fragmentGalleryBinding!!
 
-    private val frameProcess : FrameProcessor? = null
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -87,7 +85,6 @@ class GalleryFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         // allow mediapipe access asset.
-//        AndroidAssetUtil.initializeNativeAssetManager(requireContext())
         val eglManager = EglManager(null)
         fragmentGalleryBinding.btnPick.setOnClickListener {
             pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly))
@@ -191,7 +188,6 @@ class GalleryFragment : Fragment() {
 //                }
 //            }
 //            time = SystemClock.uptimeMillis() - time
-//            Log.d("time consume", "$time   $frameCount")
 //            retriever.release()
 //            // run interpreter
 //            signLanguageHelper.runInterpreter(inputArray)
@@ -218,15 +214,11 @@ class GalleryFragment : Fragment() {
             val inputVideoPath =
                 FFmpegKitConfig.getSafParameterForRead(requireContext(), uri)
             FFmpegKit.execute("-i " + inputVideoPath + " -vf fps=30 " + cacheDir.absolutePath + "/sign_frames/" + "%04d.jpg")
-//            FFmpegKit.execute("-i " + inputVideoPath + " -c:v mpeg4 file2.mp4")
-//            Log.d(">>>>","Extract done")
-//            -vf fps=30
             // load all images from cache and convert it bitmap. also run holistic on each image.
             if (folder.exists()) {
                 val allFiles =
                     folder.listFiles { pathname -> pathname?.name?.endsWith(".jpg") == true }
 
-//                Log.d(">>>>","Load all images done")
                 // convert and run holistic
                 allFiles?.forEach {
                     it.toBitmap()?.let { bitmap ->
@@ -238,7 +230,6 @@ class GalleryFragment : Fragment() {
                     }
                 }
             }
-//            Log.d(">>>>","Run interpreter")
             // run interpreter
             signLanguageHelper.runInterpreter(inputArray)
         }
@@ -249,7 +240,7 @@ class GalleryFragment : Fragment() {
         graph.addConsumablePacketToInputStream(
             MainActivity.INPUT_VIDEO_STREAM_NAME, packet, timeStamp
         )
-//        packet.release()
+        packet.release()
     }
 }
 

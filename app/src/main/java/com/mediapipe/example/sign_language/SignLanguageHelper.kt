@@ -1,11 +1,15 @@
 package com.mediapipe.example.sign_language
 
 import android.content.Context
+import com.mediapipe.example.sign_language.HandLandmark.LEFT_HANDLANDMARK_INDEX
+import com.mediapipe.example.sign_language.HandLandmark.RIGHT_HANDLANDMARK_INDEX
 import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.support.common.FileUtil
 import java.io.FileInputStream
 import java.nio.MappedByteBuffer
 import java.nio.channels.FileChannel
+import kotlin.math.max
+import kotlin.math.min
 
 class SignLanguageHelper(private val context: Context) {
     private lateinit var interpreter: Interpreter
@@ -23,36 +27,40 @@ class SignLanguageHelper(private val context: Context) {
         this.listener = listener
     }
 
-    fun runInterpreter(list: MutableList<Array<FloatArray>>) {
+    fun runInterpreter(landmarks: MutableList<Array<FloatArray>>) {
         // trim the input
-        if (list.isEmpty()) return
-        var newList = list
+        if (landmarks.isEmpty()) return
+        val minFrame = 10
         var firstFrame = -1
         var lastFrame = -1
-        list.forEachIndexed { index, floatArrays ->
-            if (!floatArrays[468][0].isNaN() || !floatArrays[522][0].isNaN()) {
+
+        // check first and last occurrences of hand landmarks
+        landmarks.forEachIndexed { index, floatArrays ->
+            if (!floatArrays[LEFT_HANDLANDMARK_INDEX][0].isNaN() || !floatArrays[RIGHT_HANDLANDMARK_INDEX][0].isNaN()) {
                 if (firstFrame == -1) {
                     firstFrame = index
-                } else {
-                    lastFrame = index
                 }
+                lastFrame = index
             }
         }
-
-        if (firstFrame != -1 && lastFrame != -1) {
-            if (firstFrame >= 0 && (lastFrame + 1 <= list.size)) {
-                newList = list.subList(firstFrame, lastFrame + 1)
-            }
-        }
-        val inputs = HashMap<String, Any>()
-        if (newList.size < 10) {
-            // prepare input
-            inputs["inputs"] = list.toTypedArray()
+        val trimLandMark: MutableList<Array<FloatArray>>
+        if (lastFrame - firstFrame >= minFrame) {
+            trimLandMark = landmarks.subList(firstFrame, lastFrame + 1)
         } else {
-            // prepare input
-            inputs["inputs"] = newList.toTypedArray()
+            firstFrame = min(lastFrame - (minFrame / 2), firstFrame)
+            lastFrame = max(firstFrame + (minFrame / 2), lastFrame)
+            if (firstFrame < 0) {
+                firstFrame = 0
+            }
+            if (lastFrame < 0 || lastFrame + 1 >= landmarks.size) {
+                lastFrame = landmarks.size
+            }
+            trimLandMark = landmarks.subList(firstFrame, lastFrame)
         }
 
+        val inputs = HashMap<String, Any>()
+        // prepare input
+        inputs["inputs"] = trimLandMark.toTypedArray()
         // prepare output
         val output = FloatArray(250)
         val outPutMap = HashMap<String, Any>()
