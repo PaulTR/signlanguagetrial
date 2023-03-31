@@ -26,35 +26,35 @@ mediapipe_simple_subgraph(
     ],
 )
 
-cc_library(
-    name = "sign_language_gpu_deps",
-    deps = [
-        ":holistic_tracking_to_render_data",
-        "//mediapipe/calculators/core:flow_limiter_calculator",
-        "//mediapipe/calculators/core:prepare_sign_language_model_input",
-        "//mediapipe/calculators/image:image_properties_calculator",
-        "//mediapipe/calculators/util:annotation_overlay_calculator",
-        "//mediapipe/modules/holistic_landmark:holistic_landmark_gpu",
-        "//mediapipe/calculators/tflite:tflite_inference_calculator",
-        "//mediapipe/calculators/tflite:tflite_converter_calculator",
-        "//mediapipe/calculators/tflite:tflite_tensors_to_classification_calculator",
-    ],
-)
+# cc_library(
+#     name = "sign_language_gpu_deps",
+#     deps = [
+#         ":holistic_tracking_to_render_data",
+#         "//mediapipe/calculators/core:flow_limiter_calculator",
+#         "//mediapipe/calculators/core:prepare_sign_language_model_input",
+#         "//mediapipe/calculators/image:image_properties_calculator",
+#         "//mediapipe/calculators/util:annotation_overlay_calculator",
+#         "//mediapipe/modules/holistic_landmark:holistic_landmark_gpu",
+#         "//mediapipe/calculators/tflite:tflite_inference_calculator",
+#         "//mediapipe/calculators/tflite:tflite_converter_calculator",
+#         "//mediapipe/calculators/tflite:tflite_tensors_to_classification_calculator",
+#     ],
+# )
 
 mediapipe_binary_graph(
     name = "sign_language_cpu",
     graph = "sign_language_cpu.pbtxt",
     output_name = "sign_language_cpu.binarypb",
-    deps = [":sign_language_gpu_deps"],
+    deps = [":sign_language_cpu_deps"],
 )
 
 cc_library(
-    name = "holistic_tracking_cpu_graph_deps",
+    name = "sign_language_cpu_deps",
     deps = [
         ":holistic_tracking_to_render_data",
+        "//mediapipe/calculators/core:prepare_sign_language_model_input",
         "//mediapipe/calculators/core:flow_limiter_calculator",
         "//mediapipe/calculators/image:image_properties_calculator",
-        "//mediapipe/calculators/util:annotation_overlay_calculator",
         "//mediapipe/modules/holistic_landmark:holistic_landmark_cpu",
     ],
 )

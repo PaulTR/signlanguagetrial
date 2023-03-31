@@ -1,13 +1,13 @@
 # Tracks and renders pose + hands + face landmarks.
 
-# GPU buffer. (GpuBuffer)
+# GPU buffer. (GpuBuffer)-- Cpu
 input_stream: "input_video"
 
 # GPU image with rendered results. (GpuBuffer)
-output_stream: "output_video"
+# output_stream: "output_video"
 
 # Sign classification list
-output_stream: "classifications"
+output_stream: "sign_language_matrix"
 
 # Throttles the images flowing downstream for flow control. It passes through
 # the very first incoming image unaltered, and waits for downstream nodes
@@ -22,7 +22,7 @@ output_stream: "classifications"
 node {
   calculator: "FlowLimiterCalculator"
   input_stream: "input_video"
-  input_stream: "FINISHED:output_video"
+  input_stream: "FINISHED:sign_language_matrix"
   input_stream_info: {
     tag_index: "FINISHED"
     back_edge: true
@@ -31,7 +31,7 @@ node {
   node_options: {
     [type.googleapis.com/mediapipe.FlowLimiterCalculatorOptions] {
       max_in_flight: 1
-      max_in_queue: 1
+      max_in_queue: 0
       # Timeout is disabled (set to 0) as first frame processing can take more
       # than 1 second.
       in_flight_timeout: 0
@@ -40,7 +40,7 @@ node {
 }
 
 node {
-  calculator: "HolisticLandmarkGpu"
+  calculator: "HolisticLandmarkCpu"
   input_stream: "IMAGE:throttled_input_video"
   output_stream: "POSE_LANDMARKS:pose_landmarks"
   output_stream: "POSE_ROI:pose_roi"
@@ -53,7 +53,7 @@ node {
 # Gets image size.
 node {
   calculator: "ImagePropertiesCalculator"
-  input_stream: "IMAGE_GPU:throttled_input_video"
+  input_stream: "IMAGE:throttled_input_video"
   output_stream: "SIZE:image_size"
 }
 
@@ -78,11 +78,11 @@ node {
 
 
 # Converts matrix to tensor
-node {
-  calculator: "TfLiteConverterCalculator"
-  input_stream: "MATRIX:sign_language_matrix"
-  output_stream: "TENSORS:sign_language_tensor"
-}
+# node {
+#   calculator: "TfLiteConverterCalculator"
+#   input_stream: "MATRIX:sign_language_matrix"
+#   output_stream: "TENSORS:sign_language_tensor"
+# }
 
   # node_options: {
   #   [type.googleapis.com/mediapipe.TfLiteConverterCalculatorOptions] {
@@ -94,28 +94,28 @@ node {
 # Runs a TensorFlow Lite model on CPU that takes an image tensor and outputs a
 # vector of tensors representing, for instance, detection boxes/keypoints and
 # scores.
-node {
-  calculator: "TfLiteInferenceCalculator"
-  input_stream: "TENSORS:sign_language_tensor"
-  output_stream: "TENSORS:classification_tensors"
-  node_options: {
-    [type.googleapis.com/mediapipe.TfLiteInferenceCalculatorOptions] {
-      model_path: "mediapipe/models/sign_language.tflite"
-    }
-  }
-}
+# node {
+#   calculator: "TfLiteInferenceCalculator"
+#   input_stream: "TENSORS:sign_language_tensor"
+#   output_stream: "TENSORS:classification_tensors"
+#   node_options: {
+#     [type.googleapis.com/mediapipe.TfLiteInferenceCalculatorOptions] {
+#       model_path: "mediapipe/models/sign_language.tflite"
+#     }
+#   }
+# }
 
-node {
-  calculator: "TfLiteTensorsToClassificationCalculator"
-  input_stream: "TENSORS:classification_tensors"
-  output_stream: "CLASSIFICATIONS:classifications"
-  options: {
-    [mediapipe.TfLiteTensorsToClassificationCalculatorOptions.ext] {
-      min_score_threshold: 0.5
-      label_map_path: "mediapipe/models/sign_language_labels.txt"
-    }
-  }
-}
+# node {
+#   calculator: "TfLiteTensorsToClassificationCalculator"
+#   input_stream: "TENSORS:classification_tensors"
+#   output_stream: "CLASSIFICATIONS:classifications"
+#   options: {
+#     [mediapipe.TfLiteTensorsToClassificationCalculatorOptions.ext] {
+#       min_score_threshold: 0.5
+#       label_map_path: "mediapipe/models/sign_language_labels.txt"
+#     }
+#   }
+# }
 
 # Converts Tensor to classification
 # node {
@@ -131,21 +131,21 @@ node {
 # }
 
 # Converts pose, hands and face landmarks to a render data vector.
-node {
-  calculator: "HolisticTrackingToRenderData"
-  input_stream: "IMAGE_SIZE:image_size"
-  input_stream: "POSE_LANDMARKS:pose_landmarks"
-  input_stream: "POSE_ROI:pose_roi"
-  input_stream: "LEFT_HAND_LANDMARKS:left_hand_landmarks"
-  input_stream: "RIGHT_HAND_LANDMARKS:right_hand_landmarks"
-  input_stream: "FACE_LANDMARKS:face_landmarks"
-  output_stream: "RENDER_DATA_VECTOR:render_data_vector"
-}
+# node {
+#   calculator: "HolisticTrackingToRenderData"
+#   input_stream: "IMAGE_SIZE:image_size"
+#   input_stream: "POSE_LANDMARKS:pose_landmarks"
+#   input_stream: "POSE_ROI:pose_roi"
+#   input_stream: "LEFT_HAND_LANDMARKS:left_hand_landmarks"
+#   input_stream: "RIGHT_HAND_LANDMARKS:right_hand_landmarks"
+#   input_stream: "FACE_LANDMARKS:face_landmarks"
+#   output_stream: "RENDER_DATA_VECTOR:render_data_vector"
+# }
 
-# Draws annotations and overlays them on top of the input images.
-node {
-  calculator: "AnnotationOverlayCalculator"
-  input_stream: "IMAGE_GPU:throttled_input_video"
-  input_stream: "VECTOR:render_data_vector"
-  output_stream: "IMAGE_GPU:output_video"
-}
+# # Draws annotations and overlays them on top of the input images.
+# node {
+#   calculator: "AnnotationOverlayCalculator"
+#   input_stream: "IMAGE_GPU:throttled_input_video"
+#   input_stream: "VECTOR:render_data_vector"
+#   output_stream: "IMAGE_GPU:output_video"
+# }

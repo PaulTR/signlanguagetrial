@@ -2,6 +2,7 @@
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include <android/log.h>
+#include <math.h>
 
 // node {
 //     calculator: "PrepareSignLanguageModelInput"
@@ -62,11 +63,11 @@ namespace mediapipe
         absl::Status Process(CalculatorContext *cc) final
         {
             // check if Face landmarks is empty
-            if (cc->Inputs().Tag("POSE_LANDMARKS").IsEmpty() || cc->Inputs().Tag("LEFT_HAND_LANDMARKS").IsEmpty() || cc->Inputs().Tag("RIGHT_HAND_LANDMARKS").IsEmpty() || cc->Inputs().Tag("FACE_LANDMARKS").IsEmpty())
-            {
-                __android_log_print(ANDROID_LOG_INFO, "sign_language %d ", "stop");
-                return absl::OkStatus();
-            }
+            // if (cc->Inputs().Tag("POSE_LANDMARKS").IsEmpty() || cc->Inputs().Tag("LEFT_HAND_LANDMARKS").IsEmpty() || cc->Inputs().Tag("RIGHT_HAND_LANDMARKS").IsEmpty() || cc->Inputs().Tag("FACE_LANDMARKS").IsEmpty())
+            // {
+            //     __android_log_print(ANDROID_LOG_INFO, "sign_language %d ", "stop");
+            //     return absl::OkStatus();
+            // }
 
             // get width height of image
             const auto [width, height] = cc->Inputs().Tag("IMAGE_SIZE").Get<std::pair<int, int>>();
@@ -78,79 +79,129 @@ namespace mediapipe
             // char const *gg = zz.c_str();
             // __android_log_print(ANDROID_LOG_INFO, "sign_language %d ", gg);
 
+            int face_offset = 0;
+            int left_hand_offset = 468;
+            int pose_offset = left_hand_offset + 21;
+            int right_hand_offset = pose_offset + 33;
+
             // FACE LANDMARK
-            const NormalizedLandmarkList &face_landmarks = cc->Inputs().Tag("FACE_LANDMARKS").Get<NormalizedLandmarkList>();
-            std::string s_before = std::to_string(face_landmarks.landmark(10).x());
-            char const *pchar_before = s_before.c_str();
-            __android_log_print(ANDROID_LOG_INFO, "sign_language face size before %d ", pchar_before);
-
-            auto new_face_landmark = NormalizeLandmarkAspectRatio(face_landmarks, width, height);
-            int face_landmarks_size = new_face_landmark->landmark_size();
-
-            for (int i = 0; i < face_landmarks_size; ++i)
+            if (cc->Inputs().Tag("FACE_LANDMARKS").IsEmpty())
             {
-                const auto &landmark = new_face_landmark->landmark(i);
-                matrix(0, i) = landmark.x();
-                matrix(1, i) = landmark.y();
-                matrix(2, i) = landmark.z();
+                for (int i = 0; i < 468; ++i)
+                {
+                    matrix(0, i) = std::numeric_limits<double>::quiet_NaN();
+                    matrix(1, i) = std::numeric_limits<double>::quiet_NaN();
+                    matrix(2, i) = std::numeric_limits<double>::quiet_NaN();
+                }
             }
+            else
+            {
+                const NormalizedLandmarkList &face_landmarks = cc->Inputs().Tag("FACE_LANDMARKS").Get<NormalizedLandmarkList>();
+                // auto new_face_landmark = NormalizeLandmarkAspectRatio(face_landmarks, width, height);
+                int face_landmarks_size = face_landmarks.landmark_size();
 
-            std::string s = std::to_string(new_face_landmark->landmark(10).x());
-            char const *pchar = s.c_str();
-            __android_log_print(ANDROID_LOG_INFO, "sign_language face size after %d ", pchar);
+                for (int i = 0; i < 468; ++i)
+                {
+                    const auto &landmark = face_landmarks.landmark(i);
+                    matrix(0, i) = landmark.x();
+                    matrix(1, i) = landmark.y();
+                    matrix(2, i) = landmark.z();
+                }
+            }
+            // std::string s_before = std::to_string(face_landmarks.landmark(10).x());
+            // char const *pchar_before = s_before.c_str();
+            // __android_log_print(ANDROID_LOG_INFO, "sign_language face size before %d ", pchar_before);
+
+            // std::string s = std::to_string(new_face_landmark->landmark(10).x());
+            // char const *pchar = s.c_str();
+            // __android_log_print(ANDROID_LOG_INFO, "sign_language face size after %d ", pchar);
 
             // LEFT_HAND
-
-            const NormalizedLandmarkList &left_hand_landmarks = cc->Inputs().Tag("LEFT_HAND_LANDMARKS").Get<NormalizedLandmarkList>();
-            auto new_left_hand_landmark = NormalizeLandmarkAspectRatio(left_hand_landmarks, width, height);
-            int left_hand_landmarks_size = new_left_hand_landmark->landmark_size();
-
-            for (int i = 0; i < left_hand_landmarks_size; ++i)
+            if (cc->Inputs().Tag("LEFT_HAND_LANDMARKS").IsEmpty())
             {
-                const auto &landmark = new_left_hand_landmark->landmark(i);
-                matrix(0, i) = landmark.x();
-                matrix(1, i) = landmark.y();
-                matrix(2, i) = landmark.z();
+                for (int i = 0; i < 21; ++i)
+                {
+                    matrix(0, left_hand_offset + i) = std::numeric_limits<double>::quiet_NaN();
+                    matrix(1, left_hand_offset + i) = std::numeric_limits<double>::quiet_NaN();
+                    matrix(2, left_hand_offset + i) = std::numeric_limits<double>::quiet_NaN();
+                }
+            }
+            else
+            {
+                const NormalizedLandmarkList &left_hand_landmarks = cc->Inputs().Tag("LEFT_HAND_LANDMARKS").Get<NormalizedLandmarkList>();
+                // auto new_left_hand_landmark = NormalizeLandmarkAspectRatio(left_hand_landmarks, width, height);
+                int left_hand_landmarks_size = left_hand_landmarks.landmark_size();
+
+                for (int i = 0; i < 21; ++i)
+                {
+                    const auto &landmark = left_hand_landmarks.landmark(i);
+                    matrix(0, left_hand_offset + i) = landmark.x();
+                    matrix(1, left_hand_offset + i) = landmark.y();
+                    matrix(2, left_hand_offset + i) = landmark.z();
+                }
             }
 
-            std::string left_hand_s = std::to_string(new_left_hand_landmark->landmark(10).x());
-            char const *left_hand_char = left_hand_s.c_str();
-            __android_log_print(ANDROID_LOG_INFO, "sign_language left hand size %d ", left_hand_char);
+            // std::string left_hand_s = std::to_string(new_left_hand_landmark->landmark(10).x());
+            // char const *left_hand_char = left_hand_s.c_str();
+            // __android_log_print(ANDROID_LOG_INFO, "sign_language left hand size %d ", left_hand_char);
 
             // POSE
-
-            const NormalizedLandmarkList &pose_landmarks = cc->Inputs().Tag("POSE_LANDMARKS").Get<NormalizedLandmarkList>();
-            auto new_pose_landmark = NormalizeLandmarkAspectRatio(pose_landmarks, width, height);
-            int pose_landmarks_size = new_pose_landmark->landmark_size();
-
-            for (int i = 0; i < pose_landmarks_size; ++i)
+            if (cc->Inputs().Tag("POSE_LANDMARKS").IsEmpty())
             {
-                const auto &landmark = new_pose_landmark->landmark(i);
-                matrix(0, i) = landmark.x();
-                matrix(1, i) = landmark.y();
-                matrix(2, i) = landmark.z();
+                for (int i = 0; i < 33; ++i)
+                {
+                    matrix(0, pose_offset + i) = std::numeric_limits<double>::quiet_NaN();
+                    matrix(1, pose_offset + i) = std::numeric_limits<double>::quiet_NaN();
+                    matrix(2, pose_offset + i) = std::numeric_limits<double>::quiet_NaN();
+                }
+            }
+            else
+            {
+                const NormalizedLandmarkList &pose_landmarks = cc->Inputs().Tag("POSE_LANDMARKS").Get<NormalizedLandmarkList>();
+                // auto new_pose_landmark = NormalizeLandmarkAspectRatio(pose_landmarks, width, height);
+                int pose_landmarks_size = pose_landmarks.landmark_size();
+
+                for (int i = 0; i < 33; ++i)
+                {
+                    const auto &landmark = pose_landmarks.landmark(i);
+                    matrix(0, pose_offset + i) = landmark.x();
+                    matrix(1, pose_offset + i) = landmark.y();
+                    matrix(2, pose_offset + i) = landmark.z();
+                }
             }
 
-            std::string pose_s = std::to_string(new_pose_landmark->landmark(10).x());
-            char const *pose_char = pose_s.c_str();
-            __android_log_print(ANDROID_LOG_INFO, "sign_language pose size %d ", pose_char);
+            // std::string pose_s = std::to_string(new_pose_landmark->landmark(10).x());
+            // char const *pose_char = pose_s.c_str();
+            // __android_log_print(ANDROID_LOG_INFO, "sign_language pose size %d ", pose_char);
 
             // RIGHT_HAND
-            const NormalizedLandmarkList &right_hand_landmarks = cc->Inputs().Tag("RIGHT_HAND_LANDMARKS").Get<NormalizedLandmarkList>();
-            auto new_right_hand_landmark = NormalizeLandmarkAspectRatio(right_hand_landmarks, width, height);
-            int right_hand_landmarks_size = new_right_hand_landmark->landmark_size();
-
-            for (int i = 0; i < right_hand_landmarks_size; ++i)
+            if (cc->Inputs().Tag("RIGHT_HAND_LANDMARKS").IsEmpty())
             {
-                const auto &landmark = new_right_hand_landmark->landmark(i);
-                matrix(0, i) = landmark.x();
-                matrix(1, i) = landmark.y();
-                matrix(2, i) = landmark.z();
+                 for (int i = 0; i < 21; ++i)
+                {
+                    matrix(0, right_hand_offset + i) = std::numeric_limits<double>::quiet_NaN();
+                    matrix(1, right_hand_offset + i) = std::numeric_limits<double>::quiet_NaN();
+                    matrix(2, right_hand_offset + i) = std::numeric_limits<double>::quiet_NaN();
+                }
+            }
+            else
+            {
+                const NormalizedLandmarkList &right_hand_landmarks = cc->Inputs().Tag("RIGHT_HAND_LANDMARKS").Get<NormalizedLandmarkList>();
+                // auto new_right_hand_landmark = NormalizeLandmarkAspectRatio(right_hand_landmarks, width, height);
+                int right_hand_landmarks_size = right_hand_landmarks.landmark_size();
+
+                for (int i = 0; i < 21; ++i)
+                {
+                    const auto &landmark = right_hand_landmarks.landmark(i);
+                    matrix(0, right_hand_offset + i) = landmark.x();
+                    matrix(1, right_hand_offset + i) = landmark.y();
+                    matrix(2, right_hand_offset + i) = landmark.z();
+                }
             }
 
-            std::string right_hand_s = std::to_string(new_right_hand_landmark->landmark(10).x());
-            char const *right_hand_char = right_hand_s.c_str();
-            __android_log_print(ANDROID_LOG_INFO, "sign_language right hand size %d ", right_hand_char);
+            // std::string right_hand_s = std::to_string(new_right_hand_landmark->landmark(10).x());
+            // char const *right_hand_char = right_hand_s.c_str();
+            // __android_log_print(ANDROID_LOG_INFO, "sign_language right hand size %d ", right_hand_char);
 
             // Output
             auto landmarks_matrix = std::make_unique<Matrix>();
