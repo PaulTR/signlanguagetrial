@@ -140,7 +140,6 @@ class CameraFragment : Fragment() {
 
         // Attach listeners to UI control widgets
         initButtonRecording()
-        initShowHandLandmarkButton()
         val eglManager = EglManager(null)
         backgroundExecutor.execute {
             graph = Graph()
@@ -168,12 +167,6 @@ class CameraFragment : Fragment() {
                 if (isRecording) {
                     inputArray.add(data)
                 }
-
-                fragmentCameraBinding.overlay.setResults(
-                    if (isShowHandLandmark) data else emptyArray(),
-                    imageWidth,
-                    imageHeight
-                )
             }
             graph.startRunningGraph()
         }
@@ -192,13 +185,6 @@ class CameraFragment : Fragment() {
             }
         })
     }
-
-    private fun initShowHandLandmarkButton() {
-        fragmentCameraBinding.switchLandmark.setOnCheckedChangeListener { buttonView, isChecked ->
-            isShowHandLandmark = isChecked
-        }
-    }
-
     @SuppressLint("ClickableViewAccessibility")
     private fun initButtonRecording() {
         fragmentCameraBinding.btnRecording.setOnTouchListener { v, event ->
