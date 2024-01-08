@@ -2,7 +2,6 @@ package com.mediapipe.example.sign_language.fragment
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Bundle
 import android.os.SystemClock
@@ -16,34 +15,23 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.arthenica.ffmpegkit.FFmpegKit
 import com.arthenica.ffmpegkit.FFmpegKitConfig
-import com.google.mediapipe.components.FrameProcessor
-import com.google.mediapipe.framework.AndroidAssetUtil
-import com.google.mediapipe.framework.AndroidPacketCreator
-import com.google.mediapipe.framework.Graph
-import com.google.mediapipe.framework.PacketGetter
-import com.google.mediapipe.glutil.EglManager
-import com.mediapipe.example.sign_language.MainActivity
+import com.google.mediapipe.tasks.vision.core.RunningMode
+import com.mediapipe.example.sign_language.LandmarkIndex
+import com.mediapipe.example.sign_language.HolisticLandmarkerHelper
 import com.mediapipe.example.sign_language.ResultsAdapter
 import com.mediapipe.example.sign_language.SignLanguageHelper
 import com.mediapipe.example.sign_language.databinding.FragmentGalleryBinding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.util.concurrent.locks.*
-import kotlin.concurrent.withLock
 
 class GalleryFragment : Fragment() {
     private var backgroundScope: CoroutineScope? = null
-    private lateinit var graph: Graph
-    private lateinit var packetCreator: AndroidPacketCreator
     private var inputArray: MutableList<Array<FloatArray>> = mutableListOf()
-
-    private val lock = ReentrantLock()
-    private val condition = lock.newCondition()
+    private lateinit var holisticLandmarkerHelper: HolisticLandmarkerHelper
     private var timePerFrame = SystemClock.uptimeMillis()
     private val pickMedia =
         registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
@@ -58,7 +46,7 @@ class GalleryFragment : Fragment() {
                     requestFocus()
                 }
             } else {
-                Log.d("PhotoPicker", "No media selected")
+                Log.d("VideoPicker", "No media selected")
             }
         }
 
@@ -85,7 +73,6 @@ class GalleryFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         // allow mediapipe access asset.
-        val eglManager = EglManager(null)
         fragmentGalleryBinding.btnPick.setOnClickListener {
             pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly))
         }
@@ -106,93 +93,27 @@ class GalleryFragment : Fragment() {
                 }
             }
         })
+        holisticLandmarkerHelper = HolisticLandmarkerHelper(RunningMode.VIDEO,
+            requireContext(),
+            object : HolisticLandmarkerHelper.LandmarkerListener {
+                override fun onError(error: String, errorCode: Int) {
+                    Log.e(
+                        "TAG",
+                        "HolisticLandmarkerHelper error: $error, code: $errorCode"
+                    )
+                }
 
-        graph = Graph()
-        graph.loadBinaryGraph(
-            AndroidAssetUtil.getAssetBytes(
-                requireActivity().assets,
-                MainActivity.BINARY_GRAPH_NAME
-            )
-        )
-        packetCreator = AndroidPacketCreator(graph)
-        graph.setParentGlContext(eglManager.nativeContext)
-        graph.addPacketCallback(MainActivity.OUTPUT_VIDEO_STREAM_NAME) { packet ->
-            val matrixLandmark = PacketGetter.getMatrixData(packet)
-            val rows = PacketGetter.getMatrixRows(packet)
-            val cols = PacketGetter.getMatrixCols(packet)
-            val data = Array(cols) { FloatArray(rows) }
-            val nums = 3
-            for (i in 0 until cols) {
-                data[i][0] = matrixLandmark[i * nums]
-                data[i][1] = matrixLandmark[i * nums + 1]
-                data[i][2] = matrixLandmark[i * nums + 2]
-            }
-            inputArray.add(data)
-            lock.withLock { condition.signal() }
-        }
-        graph.startRunningGraph()
+                override fun onResults(resultBundle: HolisticLandmarkerHelper.ResultBundle) {
+
+                }
+            })
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        graph.cancelGraph()
+        holisticLandmarkerHelper.clearHolisticLandmarker()
         signLanguageHelper.close()
     }
-
-//        private fun runHolisticOnVideo(uri: Uri) {
-//        inputArray.clear()
-//        fragmentGalleryBinding.progress.visibility = View.VISIBLE
-//        backgroundScope = CoroutineScope(Dispatchers.IO)
-//        backgroundScope?.launch {
-//
-//            // Load frames from the video.
-//            val retriever = MediaMetadataRetriever()
-//            retriever.setDataSource(requireContext(), uri)
-//            val videoLengthMs =
-//                retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
-//                    ?.toLong()
-//
-//            // Note: We need to read width/height from frame instead of getting the width/height
-//            // of the video directly because MediaRetriever returns frames that are smaller than the
-//            // actual dimension of the video file.
-//            val firstFrame = retriever.getFrameAtTime(0)
-//            val width = firstFrame?.width
-//            val height = firstFrame?.height
-//
-//            // If the video is invalid, returns a null
-//            if ((videoLengthMs == null) || (width == null) || (height == null)) return@launch
-//
-//            // Next, we'll get one frame every frameInterval ms
-//            val numberOfFrameToRead =
-//                videoLengthMs.div(MainActivity.VIDEO_INTERVAL_MS)
-//            var time = SystemClock.uptimeMillis()
-//            var frameCount = 0
-//
-//            for (i in 0..numberOfFrameToRead) {
-//                val timestampMs = i * MainActivity.VIDEO_INTERVAL_MS // ms
-//                retriever.getFrameAtTime(
-//                    timestampMs * 1000, // convert from ms to micro-s
-//                    MediaMetadataRetriever.OPTION_CLOSEST
-//                )?.let { frame ->
-//                    // Convert the video frame to ARGB_8888 which is required by the MediaPipe
-//                    val argb8888Frame =
-//                        if (frame.config == Bitmap.Config.ARGB_8888) frame
-//                        else frame.copy(Bitmap.Config.ARGB_8888, false)
-//
-//                    // Convert the input Bitmap object to an MPImage object to run inference
-//                    addNewFrame(argb8888Frame, SystemClock.uptimeMillis())
-//                    frameCount++
-//                    lock.withLock {
-//                        condition.await()
-//                    }
-//                }
-//            }
-//            time = SystemClock.uptimeMillis() - time
-//            retriever.release()
-//            // run interpreter
-//            signLanguageHelper.runInterpreter(inputArray)
-//        }
-//    }
 
     private fun runHolisticOnVideo(uri: Uri) {
         inputArray.clear()
@@ -220,13 +141,10 @@ class GalleryFragment : Fragment() {
                     folder.listFiles { pathname -> pathname?.name?.endsWith(".jpg") == true }
 
                 // convert and run holistic
-                allFiles?.forEach {
-                    it.toBitmap()?.let { bitmap ->
-                        timePerFrame += 400
+                allFiles?.forEachIndexed { index, file ->
+                    file.toBitmap()?.let { bitmap ->
+                        timePerFrame += 400 * index
                         addNewFrame(bitmap, timePerFrame)
-                        lock.withLock {
-                            condition.await()
-                        }
                     }
                 }
             }
@@ -236,11 +154,47 @@ class GalleryFragment : Fragment() {
     }
 
     private fun addNewFrame(bitmap: Bitmap, timeStamp: Long) {
-        val packet = packetCreator.createRgbImageFrame(bitmap)
-        graph.addConsumablePacketToInputStream(
-            MainActivity.INPUT_VIDEO_STREAM_NAME, packet, timeStamp
-        )
-        packet.release()
+
+        val result = holisticLandmarkerHelper.detectVideoFile(bitmap, timeStamp)
+        // 543 landmarks (33 pose landmarks, 468 face landmarks, and 21 hand landmarks per hand)
+        val data = Array(543) { FloatArray(3) { Float.NaN } }
+        result?.faceLandmarks()?.forEachIndexed { index, normalizedLandmark ->
+                if (index < LandmarkIndex.LEFT_HANDLANDMARK_INDEX) {
+                    data[index + LandmarkIndex.FACE_LANDMARK_INDEX][0] =
+                        normalizedLandmark.x()
+                    data[index + LandmarkIndex.FACE_LANDMARK_INDEX][1] =
+                        normalizedLandmark.y()
+                    data[index + LandmarkIndex.FACE_LANDMARK_INDEX][2] =
+                        normalizedLandmark.z()
+                }
+            }
+        result?.leftHandLandmarks()
+            ?.forEachIndexed { index, normalizedLandmark ->
+                data[index + LandmarkIndex.LEFT_HANDLANDMARK_INDEX][0] =
+                    normalizedLandmark.x()
+                data[index + LandmarkIndex.LEFT_HANDLANDMARK_INDEX][1] =
+                    normalizedLandmark.y()
+                data[index + LandmarkIndex.LEFT_HANDLANDMARK_INDEX][2] =
+                    normalizedLandmark.z()
+            }
+        result?.poseLandmarks()?.forEachIndexed { index, normalizedLandmark ->
+                data[index + LandmarkIndex.POSE_LANDMARK_INDEX][0] =
+                    normalizedLandmark.x()
+                data[index + LandmarkIndex.POSE_LANDMARK_INDEX][1] =
+                    normalizedLandmark.y()
+                data[index + LandmarkIndex.POSE_LANDMARK_INDEX][2] =
+                    normalizedLandmark.z()
+            }
+        result?.rightHandLandmarks()
+            ?.forEachIndexed { index, normalizedLandmark ->
+                data[index + LandmarkIndex.RIGHT_HANDLANDMARK_INDEX][0] =
+                    normalizedLandmark.x()
+                data[index + LandmarkIndex.RIGHT_HANDLANDMARK_INDEX][1] =
+                    normalizedLandmark.y()
+                data[index + LandmarkIndex.RIGHT_HANDLANDMARK_INDEX][2] =
+                    normalizedLandmark.z()
+            }
+        inputArray.add(data)
     }
 }
 

@@ -6,13 +6,10 @@ import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
 import android.content.res.Configuration
-import android.graphics.Bitmap
-import android.graphics.Matrix
 import android.graphics.Point
 import android.graphics.Rect
 import android.os.Bundle
 import android.os.Handler
-import android.os.SystemClock
 import android.transition.ChangeBounds
 import android.transition.TransitionManager
 import android.transition.TransitionSet
@@ -34,12 +31,10 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.Navigation
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.google.mediapipe.framework.AndroidAssetUtil
-import com.google.mediapipe.framework.AndroidPacketCreator
-import com.google.mediapipe.framework.Graph
-import com.google.mediapipe.framework.PacketGetter
-import com.google.mediapipe.glutil.EglManager
-import com.mediapipe.example.sign_language.MainActivity
+import com.google.mediapipe.tasks.vision.core.RunningMode
+import com.google.mediapipe.tasks.vision.holisticlandmarker.HolisticLandmarkerResult
+import com.mediapipe.example.sign_language.LandmarkIndex
+import com.mediapipe.example.sign_language.HolisticLandmarkerHelper
 import com.mediapipe.example.sign_language.R
 import com.mediapipe.example.sign_language.ResultsAdapter
 import com.mediapipe.example.sign_language.SignLanguageHelper
@@ -70,25 +65,20 @@ class CameraFragment : Fragment() {
     private lateinit var backgroundExecutor: ExecutorService
 
     // recording button
-    private var i = 0
+    private var animationI = 0
     private val al: ArrayList<Int> = ArrayList()
     private val al2: ArrayList<Int> = ArrayList()
     private var handler: Handler? = null
     private var runnable: Runnable? = null
 
     private var isRecording = false
-    private var isShowHandLandmark = false
 
-    // MediaPipe graph
-    private lateinit var graph: Graph
-    private lateinit var packetCreator: AndroidPacketCreator
     private var inputArray: MutableList<Array<FloatArray>> = mutableListOf()
     private lateinit var signLanguageHelper: SignLanguageHelper
     private val adapter: ResultsAdapter by lazy {
         ResultsAdapter()
     }
-    private var imageWidth = 0
-    private var imageHeight = 0
+    private lateinit var holisticLandmarkerHelper: HolisticLandmarkerHelper
     override fun onResume() {
         super.onResume()
         // Make sure that all permissions are still present, since the
@@ -121,6 +111,12 @@ class CameraFragment : Fragment() {
         return fragmentCameraBinding.root
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        holisticLandmarkerHelper.clearHolisticLandmarker()
+        signLanguageHelper.close()
+    }
+
     @SuppressLint("MissingPermission")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -140,35 +136,65 @@ class CameraFragment : Fragment() {
 
         // Attach listeners to UI control widgets
         initButtonRecording()
-        val eglManager = EglManager(null)
         backgroundExecutor.execute {
-            graph = Graph()
-            graph.loadBinaryGraph(
-                AndroidAssetUtil.getAssetBytes(
-                    requireActivity().assets,
-                    MainActivity.BINARY_GRAPH_NAME
-                )
-            )
-            packetCreator = AndroidPacketCreator(graph)
-            graph.setParentGlContext(eglManager.nativeContext)
-            graph.addPacketCallback(MainActivity.OUTPUT_VIDEO_STREAM_NAME) { packet ->
-                val matrixLandmark = PacketGetter.getMatrixData(packet)
-                val rows = PacketGetter.getMatrixRows(packet)
-                val cols = PacketGetter.getMatrixCols(packet)
-                val data = Array(cols) { FloatArray(rows) }
-                val nums = 3
-                for (i in 0 until cols) {
-                    data[i][0] = matrixLandmark[i * nums]
-                    data[i][1] = matrixLandmark[i * nums + 1]
-                    data[i][2] = matrixLandmark[i * nums + 2]
-                }
+            holisticLandmarkerHelper =
+                HolisticLandmarkerHelper(RunningMode.LIVE_STREAM,
+                    requireContext(),
+                    object : HolisticLandmarkerHelper.LandmarkerListener {
+                        override fun onError(error: String, errorCode: Int) {
+                            Log.e(
+                                TAG,
+                                "HolisticLandmarkerHelper error: $error, code: $errorCode"
+                            )
+                        }
 
-                // add landmark data if user hold recording button
-                if (isRecording) {
-                    inputArray.add(data)
-                }
-            }
-            graph.startRunningGraph()
+                        override fun onResults(result: HolisticLandmarkerResult) {
+                            if (isRecording) {
+                                // 543 landmarks (33 pose landmarks, 468 face landmarks, and 21 hand landmarks per hand)
+                                val data =
+                                    Array(543) { FloatArray(3) { Float.NaN } }
+                                result.faceLandmarks()
+                                    .forEachIndexed { index, normalizedLandmark ->
+                                        if (index < LandmarkIndex.LEFT_HANDLANDMARK_INDEX) {
+                                            data[index + LandmarkIndex.FACE_LANDMARK_INDEX][0] =
+                                                normalizedLandmark.x()
+                                            data[index + LandmarkIndex.FACE_LANDMARK_INDEX][1] =
+                                                normalizedLandmark.y()
+                                            data[index + LandmarkIndex.FACE_LANDMARK_INDEX][2] =
+                                                normalizedLandmark.z()
+                                        }
+                                    }
+                                result.leftHandLandmarks()
+                                    .forEachIndexed { index, normalizedLandmark ->
+                                        data[index + LandmarkIndex.LEFT_HANDLANDMARK_INDEX][0] =
+                                            normalizedLandmark.x()
+                                        data[index + LandmarkIndex.LEFT_HANDLANDMARK_INDEX][1] =
+                                            normalizedLandmark.y()
+                                        data[index + LandmarkIndex.LEFT_HANDLANDMARK_INDEX][2] =
+                                            normalizedLandmark.z()
+                                    }
+                                result.poseLandmarks()
+                                    .forEachIndexed { index, normalizedLandmark ->
+                                        data[index + LandmarkIndex.POSE_LANDMARK_INDEX][0] =
+                                            normalizedLandmark.x()
+                                        data[index + LandmarkIndex.POSE_LANDMARK_INDEX][1] =
+                                            normalizedLandmark.y()
+                                        data[index + LandmarkIndex.POSE_LANDMARK_INDEX][2] =
+                                            normalizedLandmark.z()
+                                    }
+                                result.rightHandLandmarks()
+                                    .forEachIndexed { index, normalizedLandmark ->
+                                        data[index + LandmarkIndex.RIGHT_HANDLANDMARK_INDEX][0] =
+                                            normalizedLandmark.x()
+                                        data[index + LandmarkIndex.RIGHT_HANDLANDMARK_INDEX][1] =
+                                            normalizedLandmark.y()
+                                        data[index + LandmarkIndex.RIGHT_HANDLANDMARK_INDEX][2] =
+                                            normalizedLandmark.z()
+                                    }
+                                inputArray.add(data)
+                            }
+                        }
+                    })
         }
 
         fragmentCameraBinding.recyclerviewResults.layoutManager =
@@ -185,6 +211,7 @@ class CameraFragment : Fragment() {
             }
         })
     }
+
     @SuppressLint("ClickableViewAccessibility")
     private fun initButtonRecording() {
         fragmentCameraBinding.btnRecording.setOnTouchListener { v, event ->
@@ -200,6 +227,7 @@ class CameraFragment : Fragment() {
                     runnable?.let { handler?.postDelayed(it, 80) }
                     return@setOnTouchListener true
                 }
+
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                     isRecording = false
                     fragmentCameraBinding.btnRecording.animateRadius(
@@ -222,22 +250,22 @@ class CameraFragment : Fragment() {
             //to make smooth stroke width animation I increase and decrease value step by step
             val random: Int
             if (al.isNotEmpty()) {
-                random = al[i++]
-                if (i >= al.size) {
+                random = al[animationI++]
+                if (animationI >= al.size) {
                     for (j in al.indices.reversed()) {
                         al2.add(al[j])
                     }
                     al.clear()
-                    i = 0
+                    animationI = 0
                 }
             } else {
-                random = al2[i++]
-                if (i >= al2.size) {
+                random = al2[animationI++]
+                if (animationI >= al2.size) {
                     for (j in al2.indices.reversed()) {
                         al.add(al2[j])
                     }
                     al2.clear()
-                    i = 0
+                    animationI = 0
                 }
             }
             fragmentCameraBinding.btnRecording.animateRadius(
@@ -330,12 +358,11 @@ class CameraFragment : Fragment() {
         val finalBounds = Rect()
         val globalOffset = Point()
         fragmentCameraBinding.btnRecording.getGlobalVisibleRect(
-            finalBounds,
-            globalOffset
+            finalBounds, globalOffset
         )
         TransitionManager.beginDelayedTransition(
-            fragmentCameraBinding.ivSquare, TransitionSet()
-                .addTransition(ChangeBounds())
+            fragmentCameraBinding.ivSquare,
+            TransitionSet().addTransition(ChangeBounds())
                 .setDuration(settingPopupVisibilityDuration)
         )
         val params: ViewGroup.LayoutParams =
@@ -346,9 +373,7 @@ class CameraFragment : Fragment() {
         val set = AnimatorSet()
         set.play(
             ObjectAnimator.ofFloat(
-                fragmentCameraBinding.ivSquare,
-                "radius",
-                dpToPx(8f).toFloat()
+                fragmentCameraBinding.ivSquare, "radius", dpToPx(8f).toFloat()
             )
         )
         set.duration = settingPopupVisibilityDuration
@@ -375,8 +400,8 @@ class CameraFragment : Fragment() {
             currentAnimator?.cancel()
         }
         TransitionManager.beginDelayedTransition(
-            fragmentCameraBinding.ivSquare, TransitionSet()
-                .addTransition(ChangeBounds())
+            fragmentCameraBinding.ivSquare,
+            TransitionSet().addTransition(ChangeBounds())
                 .setDuration(settingPopupVisibilityDuration)
         )
         val params: ViewGroup.LayoutParams =
@@ -387,9 +412,7 @@ class CameraFragment : Fragment() {
         val set1 = AnimatorSet()
         set1.play(
             ObjectAnimator.ofFloat(
-                fragmentCameraBinding.ivSquare,
-                "radius",
-                dpToPx(40f).toFloat()
+                fragmentCameraBinding.ivSquare, "radius", dpToPx(40f).toFloat()
             )
         ) //radius = height/2 to make it round
         set1.duration = settingPopupVisibilityDuration
@@ -414,14 +437,12 @@ class CameraFragment : Fragment() {
     private fun dpToPx(valueInDp: Float): Int {
         val metrics = resources.displayMetrics
         return TypedValue.applyDimension(
-            TypedValue.COMPLEX_UNIT_DIP,
-            valueInDp,
-            metrics
+            TypedValue.COMPLEX_UNIT_DIP, valueInDp, metrics
         ).toInt()
     }
 
     private fun resetAnimation() {
-        i = 0
+        animationI = 0
         al.clear()
         al2.clear()
         al.add(25)
@@ -437,47 +458,8 @@ class CameraFragment : Fragment() {
     }
 
     private fun extractHolistic(imageProxy: ImageProxy) {
-        val bitmapBuffer = Bitmap.createBitmap(
-            imageProxy.width, imageProxy.height, Bitmap.Config.ARGB_8888
-        )
-        imageProxy.use { bitmapBuffer.copyPixelsFromBuffer(imageProxy.planes[0].buffer) }
-
-        val matrix = Matrix().apply {
-            // Rotate the frame received from the camera to be in the same direction as it'll be shown
-            postRotate(imageProxy.imageInfo.rotationDegrees.toFloat())
-
-            // flip image since we only support front camera
-            postScale(
-                -1f,
-                1f,
-                imageProxy.width.toFloat(),
-                imageProxy.height.toFloat()
-            )
-        }
-
-        // Rotate bitmap to match what our model expects
-        val rotatedBitmap = Bitmap.createBitmap(
-            bitmapBuffer,
-            0,
-            0,
-            bitmapBuffer.width,
-            bitmapBuffer.height,
-            matrix,
-            false
-        )
-
-        // set width and height at the first time
-        if (imageWidth == 0 && imageHeight == 0) {
-            imageWidth = rotatedBitmap.width
-            imageHeight = rotatedBitmap.height
-        }
-
-        val packet = packetCreator.createRgbImageFrame(rotatedBitmap)
-        graph.addConsumablePacketToInputStream(
-            MainActivity.INPUT_VIDEO_STREAM_NAME,
-            packet,
-            SystemClock.uptimeMillis()
-        )
-        packet.release()
+        holisticLandmarkerHelper.detectLiveStreamCamera(imageProxy, true)
     }
+
+
 }

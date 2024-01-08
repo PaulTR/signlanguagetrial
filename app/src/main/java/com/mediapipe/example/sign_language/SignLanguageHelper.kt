@@ -1,8 +1,8 @@
 package com.mediapipe.example.sign_language
 
 import android.content.Context
-import com.mediapipe.example.sign_language.HandLandmark.LEFT_HANDLANDMARK_INDEX
-import com.mediapipe.example.sign_language.HandLandmark.RIGHT_HANDLANDMARK_INDEX
+import com.mediapipe.example.sign_language.LandmarkIndex.LEFT_HANDLANDMARK_INDEX
+import com.mediapipe.example.sign_language.LandmarkIndex.RIGHT_HANDLANDMARK_INDEX
 import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.support.common.FileUtil
 import java.io.FileInputStream

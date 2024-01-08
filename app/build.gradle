@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
+    id 'de.undercouch.download'
 }
 
 android {
@@ -35,8 +36,11 @@ android {
     }
 }
 
+// import DownloadMPTasks task
+project.ext.ASSET_DIR = projectDir.toString() + '/src/main/assets'
+apply from: 'download_tasks.gradle'
+
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
     implementation 'androidx.core:core-ktx:1.7.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.8.0'
@@ -44,16 +48,6 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
-
-    implementation 'com.google.flogger:flogger:latest.release'
-    implementation 'com.google.flogger:flogger-system-backend:latest.release'
-    implementation 'com.google.code.findbugs:jsr305:latest.release'
-    implementation 'com.google.guava:guava:27.0.1-android'
-    implementation 'com.google.protobuf:protobuf-javalite:3.19.1'
-
-    def auto_value_version = "1.8.1"
-    implementation "com.google.auto.value:auto-value-annotations:$auto_value_version"
-    annotationProcessor "com.google.auto.value:auto-value:$auto_value_version"
 
     implementation 'org.tensorflow:tensorflow-lite:2.11.0'
     implementation 'org.tensorflow:tensorflow-lite-support:0.4.3'
@@ -78,4 +72,6 @@ dependencies {
 
     // FFmpeg
     implementation 'com.arthenica:ffmpeg-kit-full:5.1'
+
+    implementation("com.google.mediapipe:tasks-vision:0.10.9")
 }
