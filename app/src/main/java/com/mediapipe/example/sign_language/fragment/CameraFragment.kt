@@ -1,5 +1,6 @@
 package com.mediapipe.example.sign_language.fragment
 
+import CameraViewModel
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.AnimatorSet
@@ -29,6 +30,7 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.navigation.Navigation
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.mediapipe.tasks.vision.core.RunningMode
@@ -39,11 +41,12 @@ import com.mediapipe.example.sign_language.R
 import com.mediapipe.example.sign_language.ResultsAdapter
 import com.mediapipe.example.sign_language.SignLanguageHelper
 import com.mediapipe.example.sign_language.databinding.FragmentCameraBinding
+import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
-class CameraFragment : Fragment() {
+class CameraFragment : Fragment(), HolisticLandmarkerHelper.LandmarkerListener {
     companion object {
         private const val TAG = "Hand gesture recognizer"
     }
@@ -77,6 +80,9 @@ class CameraFragment : Fragment() {
     private lateinit var signLanguageHelper: SignLanguageHelper
 
     private lateinit var holisticLandmarkerHelper: HolisticLandmarkerHelper
+
+    private val viewModel: CameraViewModel by viewModels()
+
     override fun onResume() {
         super.onResume()
         // Make sure that all permissions are still present, since the
@@ -99,12 +105,9 @@ class CameraFragment : Fragment() {
     }
 
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
-        _fragmentCameraBinding =
-            FragmentCameraBinding.inflate(inflater, container, false)
+        _fragmentCameraBinding = FragmentCameraBinding.inflate(inflater, container, false)
 
         return fragmentCameraBinding.root
     }
@@ -134,73 +137,17 @@ class CameraFragment : Fragment() {
 
         // Attach listeners to UI control widgets
         initButtonRecording()
-        backgroundExecutor.execute {
-            holisticLandmarkerHelper =
-                HolisticLandmarkerHelper(RunningMode.LIVE_STREAM,
-                    requireContext(),
-                    object : HolisticLandmarkerHelper.LandmarkerListener {
-                        override fun onError(error: String, errorCode: Int) {
-                            Log.e(
-                                TAG,
-                                "HolisticLandmarkerHelper error: $error, code: $errorCode"
-                            )
-                        }
-
-                        override fun onResults(result: HolisticLandmarkerResult) {
-                            // 543 landmarks (33 pose landmarks, 468 face landmarks, and 21 hand landmarks per hand)
-                            val data =
-                                Array(543) { FloatArray(3) { Float.NaN } }
-                            result.faceLandmarks()
-                                .forEachIndexed { index, normalizedLandmark ->
-                                    if (index < LandmarkIndex.LEFT_HANDLANDMARK_INDEX) {
-                                        data[index + LandmarkIndex.FACE_LANDMARK_INDEX][0] =
-                                            normalizedLandmark.x()
-                                        data[index + LandmarkIndex.FACE_LANDMARK_INDEX][1] =
-                                            normalizedLandmark.y()
-                                        data[index + LandmarkIndex.FACE_LANDMARK_INDEX][2] =
-                                            normalizedLandmark.z()
-                                    }
-                                }
-                            result.leftHandLandmarks()
-                                .forEachIndexed { index, normalizedLandmark ->
-                                    data[index + LandmarkIndex.LEFT_HANDLANDMARK_INDEX][0] =
-                                        normalizedLandmark.x()
-                                    data[index + LandmarkIndex.LEFT_HANDLANDMARK_INDEX][1] =
-                                        normalizedLandmark.y()
-                                    data[index + LandmarkIndex.LEFT_HANDLANDMARK_INDEX][2] =
-                                        normalizedLandmark.z()
-                                }
-                            result.poseLandmarks()
-                                .forEachIndexed { index, normalizedLandmark ->
-                                    data[index + LandmarkIndex.POSE_LANDMARK_INDEX][0] =
-                                        normalizedLandmark.x()
-                                    data[index + LandmarkIndex.POSE_LANDMARK_INDEX][1] =
-                                        normalizedLandmark.y()
-                                    data[index + LandmarkIndex.POSE_LANDMARK_INDEX][2] =
-                                        normalizedLandmark.z()
-                                }
-                            result.rightHandLandmarks()
-                                .forEachIndexed { index, normalizedLandmark ->
-                                    data[index + LandmarkIndex.RIGHT_HANDLANDMARK_INDEX][0] =
-                                        normalizedLandmark.x()
-                                    data[index + LandmarkIndex.RIGHT_HANDLANDMARK_INDEX][1] =
-                                        normalizedLandmark.y()
-                                    data[index + LandmarkIndex.RIGHT_HANDLANDMARK_INDEX][2] =
-                                        normalizedLandmark.z()
-                                }
-                            inputArray.add(data)
-                        }
-                    })
-        }
-
 
         signLanguageHelper = SignLanguageHelper(requireContext())
-        signLanguageHelper.createInterpreter(object :
-            SignLanguageHelper.SignLanguageListener {
+        signLanguageHelper.createInterpreter(object : SignLanguageHelper.SignLanguageListener {
             override fun onResult(results: List<Pair<String, Float>>) {
                 resultsAdapter.updateResults(results)
             }
         })
+        viewModel.helperState.observe(viewLifecycleOwner) {
+            updateBottomSheetControlsUi(helperState = it)
+        }
+        setUpBottomSheetListener()
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -260,8 +207,7 @@ class CameraFragment : Fragment() {
                 }
             }
             fragmentCameraBinding.btnRecording.animateRadius(
-                fragmentCameraBinding.btnRecording.getmMaxRadius(),
-                random.toFloat()
+                fragmentCameraBinding.btnRecording.getmMaxRadius(), random.toFloat()
             )
             handler?.postDelayed(runnable!!, 130)
         }
@@ -269,8 +215,7 @@ class CameraFragment : Fragment() {
 
     // Initialize CameraX, and prepare to bind the camera use cases
     private fun setUpCamera() {
-        val cameraProviderFuture =
-            ProcessCameraProvider.getInstance(requireContext())
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
         cameraProviderFuture.addListener(
             {
                 // CameraProvider
@@ -282,38 +227,237 @@ class CameraFragment : Fragment() {
         )
     }
 
+    private fun setUpBottomSheetListener() {
+        with(fragmentCameraBinding.bottomSheetLayout) {
+            // When clicked, lower face presence score threshold floor
+            facePresenceThresholdMinus.setOnClickListener {
+                var minFacePresenceConfidence =
+                    viewModel.helperState.value!!.minFacePresenceConfidence
+                if (minFacePresenceConfidence > HolisticLandmarkerHelper.MIN_CONFIDENCE) {
+                    minFacePresenceConfidence =
+                        (minFacePresenceConfidence - 0.1f).coerceAtLeast(HolisticLandmarkerHelper.MIN_CONFIDENCE)
+                    viewModel.setMinFacePresenceConfidence(minFacePresenceConfidence)
+                }
+            }
+
+            // When clicked, raise face presence score threshold floor
+            facePresenceThresholdPlus.setOnClickListener {
+                var minFacePresenceConfidence =
+                    viewModel.helperState.value!!.minFacePresenceConfidence
+                if (minFacePresenceConfidence < HolisticLandmarkerHelper.MAX_CONFIDENCE) {
+                    minFacePresenceConfidence =
+                        (minFacePresenceConfidence + 0.1f).coerceAtMost(HolisticLandmarkerHelper.MAX_CONFIDENCE)
+                    viewModel.setMinFacePresenceConfidence(minFacePresenceConfidence)
+                }
+            }
+
+            // When clicked, lower pose presence score threshold floor
+            posePresenceThresholdMinus.setOnClickListener {
+                var minPosePresenceConfidence =
+                    viewModel.helperState.value!!.minPosePresenceConfidence
+                if (minPosePresenceConfidence > HolisticLandmarkerHelper.MIN_CONFIDENCE) {
+                    minPosePresenceConfidence =
+                        (minPosePresenceConfidence - 0.1f).coerceAtLeast(HolisticLandmarkerHelper.MIN_CONFIDENCE)
+                    viewModel.setMinPosePresenceConfidence(minPosePresenceConfidence)
+                }
+            }
+
+            // When clicked, raise pose presence score threshold floor
+            posePresenceThresholdPlus.setOnClickListener {
+                var minPosePresenceConfidence =
+                    viewModel.helperState.value!!.minPosePresenceConfidence
+                if (minPosePresenceConfidence < HolisticLandmarkerHelper.MAX_CONFIDENCE) {
+                    minPosePresenceConfidence =
+                        (minPosePresenceConfidence + 0.1f).coerceAtMost(HolisticLandmarkerHelper.MAX_CONFIDENCE)
+                    viewModel.setMinPosePresenceConfidence(minPosePresenceConfidence)
+                }
+            }
+
+            // When clicked, lower hand detection score threshold floor
+            handLandmarksThresholdMinus.setOnClickListener {
+                var minHandLandmarkConfidence =
+                    viewModel.helperState.value!!.minHandLandmarkConfidence
+                if (minHandLandmarkConfidence > HolisticLandmarkerHelper.MIN_CONFIDENCE) {
+                    minHandLandmarkConfidence =
+                        (minHandLandmarkConfidence - 0.1f).coerceAtLeast(HolisticLandmarkerHelper.MIN_CONFIDENCE)
+                    viewModel.setMinHandLandmarkConfidence(minHandLandmarkConfidence)
+                }
+            }
+
+            // When clicked, raise hand detection score threshold floor
+            handLandmarksThresholdPlus.setOnClickListener {
+                var minHandLandmarkConfidence =
+                    viewModel.helperState.value!!.minHandLandmarkConfidence
+                if (minHandLandmarkConfidence < HolisticLandmarkerHelper.MAX_CONFIDENCE) {
+                    minHandLandmarkConfidence =
+                        (minHandLandmarkConfidence + 0.1f).coerceAtMost(HolisticLandmarkerHelper.MAX_CONFIDENCE)
+                    viewModel.setMinHandLandmarkConfidence(minHandLandmarkConfidence)
+                }
+            }
+
+            // When clicked, lower face detection score threshold floor
+            faceDetectionThresholdMinus.setOnClickListener {
+                var minFaceDetectionConfidence =
+                    viewModel.helperState.value!!.minFaceDetectionConfidence
+                if (minFaceDetectionConfidence > HolisticLandmarkerHelper.MIN_CONFIDENCE) {
+                    minFaceDetectionConfidence =
+                        (minFaceDetectionConfidence - 0.1f).coerceAtLeast(HolisticLandmarkerHelper.MIN_CONFIDENCE)
+                    viewModel.setMinFaceDetectionConfidence(minFaceDetectionConfidence)
+                }
+            }
+
+            // When clicked, raise face detection score threshold floor
+            faceDetectionThresholdPlus.setOnClickListener {
+                var minFaceDetectionConfidence =
+                    viewModel.helperState.value!!.minFaceDetectionConfidence
+                if (minFaceDetectionConfidence < HolisticLandmarkerHelper.MAX_CONFIDENCE) {
+                    minFaceDetectionConfidence =
+                        (minFaceDetectionConfidence + 0.1f).coerceAtMost(HolisticLandmarkerHelper.MAX_CONFIDENCE)
+                    viewModel.setMinFaceDetectionConfidence(minFaceDetectionConfidence)
+                }
+            }
+
+            // When clicked, lower pose detection score threshold floor
+            poseDetectionThresholdMinus.setOnClickListener {
+                var minPoseDetectionConfidence =
+                    viewModel.helperState.value!!.minPoseDetectionConfidence
+                if (minPoseDetectionConfidence > HolisticLandmarkerHelper.MIN_CONFIDENCE) {
+                    minPoseDetectionConfidence =
+                        (minPoseDetectionConfidence - 0.1f).coerceAtLeast(HolisticLandmarkerHelper.MIN_CONFIDENCE)
+                    viewModel.setMinPoseDetectionConfidence(minPoseDetectionConfidence)
+                }
+            }
+
+            // When clicked, raise pose detection score threshold floor
+            poseDetectionThresholdPlus.setOnClickListener {
+                var minPoseDetectionConfidence =
+                    viewModel.helperState.value!!.minPoseDetectionConfidence
+                if (minPoseDetectionConfidence < HolisticLandmarkerHelper.MAX_CONFIDENCE) {
+                    minPoseDetectionConfidence =
+                        (minPoseDetectionConfidence + 0.1f).coerceAtMost(HolisticLandmarkerHelper.MAX_CONFIDENCE)
+                    viewModel.setMinPoseDetectionConfidence(minPoseDetectionConfidence)
+                }
+            }
+
+            // When clicked, lower face suppression score threshold floor
+            faceSuppressionMinus.setOnClickListener {
+                var minFaceSuppressionThreshold =
+                    viewModel.helperState.value!!.minFaceSuppressionThreshold
+                if (minFaceSuppressionThreshold > HolisticLandmarkerHelper.MIN_CONFIDENCE) {
+                    minFaceSuppressionThreshold =
+                        (minFaceSuppressionThreshold - 0.1f).coerceAtLeast(HolisticLandmarkerHelper.MIN_CONFIDENCE)
+                    viewModel.setMinFaceSuppressionThreshold(minFaceSuppressionThreshold)
+                }
+            }
+
+            // When clicked, raise face suppression score threshold floor
+            faceSuppressionPlus.setOnClickListener {
+                var minFaceSuppressionThreshold =
+                    viewModel.helperState.value!!.minFaceSuppressionThreshold
+                if (minFaceSuppressionThreshold < HolisticLandmarkerHelper.MAX_CONFIDENCE) {
+                    minFaceSuppressionThreshold =
+                        (minFaceSuppressionThreshold + 0.1f).coerceAtMost(HolisticLandmarkerHelper.MAX_CONFIDENCE)
+                    viewModel.setMinFaceSuppressionThreshold(minFaceSuppressionThreshold)
+                }
+            }
+
+            // When clicked, lower pose suppression score threshold floor
+            poseSuppressionMinus.setOnClickListener {
+                var minPoseSuppressionThreshold =
+                    viewModel.helperState.value!!.minPoseSuppressionThreshold
+                if (minPoseSuppressionThreshold > HolisticLandmarkerHelper.MIN_CONFIDENCE) {
+                    minPoseSuppressionThreshold =
+                        (minPoseSuppressionThreshold - 0.1f).coerceAtLeast(HolisticLandmarkerHelper.MIN_CONFIDENCE)
+                    viewModel.setMinPoseSuppressionThreshold(minPoseSuppressionThreshold)
+                }
+            }
+
+            // When clicked, raise pose suppression score threshold floor
+            poseSuppressionPlus.setOnClickListener {
+                var minPoseSuppressionThreshold =
+                    viewModel.helperState.value!!.minPoseSuppressionThreshold
+                if (minPoseSuppressionThreshold < HolisticLandmarkerHelper.MAX_CONFIDENCE) {
+                    minPoseSuppressionThreshold =
+                        (minPoseSuppressionThreshold + 0.1f).coerceAtMost(HolisticLandmarkerHelper.MAX_CONFIDENCE)
+                    viewModel.setMinPoseSuppressionThreshold(minPoseSuppressionThreshold)
+                }
+            }
+        }
+    }
+
+    // Update the values displayed in the bottom sheet & Reset HolisticLandmarkerHelper
+    private fun updateBottomSheetControlsUi(helperState: HelperState) {
+        // Update bottom sheet settings
+        with(fragmentCameraBinding.bottomSheetLayout) {
+            facePresenceThresholdValue.text = String.format(
+                Locale.US, "%.1f", helperState.minFacePresenceConfidence
+            )
+
+            posePresenceThresholdValue.text = String.format(
+                Locale.US, "%.1f", helperState.minPosePresenceConfidence
+            )
+            handLandmarksThresholdValue.text = String.format(
+                Locale.US, "%.1f", helperState.minHandLandmarkConfidence
+            )
+            faceDetectionThresholdValue.text = String.format(
+                Locale.US, "%.1f", helperState.minFaceDetectionConfidence
+            )
+            poseDetectionThresholdValue.text = String.format(
+                Locale.US, "%.1f", helperState.minPoseDetectionConfidence
+            )
+            faceSuppressionValue.text = String.format(
+                Locale.US, "%.1f", helperState.minFaceSuppressionThreshold
+            )
+            poseSuppressionValue.text = String.format(
+                Locale.US, "%.1f", helperState.minPoseSuppressionThreshold
+            )
+        }
+        // Create the HolisticLandmarkerHelper that will handle the inference
+        backgroundExecutor.execute {
+            // Clear it and recreate with new settings
+            holisticLandmarkerHelper = HolisticLandmarkerHelper(
+                context = requireContext(),
+                runningMode = RunningMode.LIVE_STREAM,
+                minFacePresenceConfidence = helperState.minFacePresenceConfidence,
+                minHandLandmarksConfidence = helperState.minHandLandmarkConfidence,
+                minPosePresenceConfidence = helperState.minPosePresenceConfidence,
+                minFaceDetectionConfidence = helperState.minFaceDetectionConfidence,
+                minPoseDetectionConfidence = helperState.minPoseDetectionConfidence,
+                minFaceSuppressionThreshold = helperState.minFaceSuppressionThreshold,
+                minPoseSuppressionThreshold = helperState.minPoseSuppressionThreshold,
+                landmarkerHelperListener = this
+            )
+        }
+    }
+
     // Declare and bind preview, capture and analysis use cases
     @SuppressLint("UnsafeOptInUsageError")
     private fun bindCameraUseCases() {
 
         // CameraProvider
-        val cameraProvider = cameraProvider
-            ?: throw IllegalStateException("Camera initialization failed.")
+        val cameraProvider =
+            cameraProvider ?: throw IllegalStateException("Camera initialization failed.")
 
-        val cameraSelector =
-            CameraSelector.Builder().requireLensFacing(cameraFacing).build()
+        val cameraSelector = CameraSelector.Builder().requireLensFacing(cameraFacing).build()
 
         // Preview. Only using the 4:3 ratio because this is the closest to our models
         preview = Preview.Builder().setTargetAspectRatio(AspectRatio.RATIO_4_3)
-            .setTargetRotation(fragmentCameraBinding.viewFinder.display.rotation)
-            .build()
+            .setTargetRotation(fragmentCameraBinding.viewFinder.display.rotation).build()
 
         // ImageAnalysis. Using RGBA 8888 to match how our models work
-        imageAnalyzer =
-            ImageAnalysis.Builder().setTargetAspectRatio(AspectRatio.RATIO_4_3)
-                .setTargetRotation(fragmentCameraBinding.viewFinder.display.rotation)
-                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
-                .build()
-                // The analyzer can then be assigned to the instance
-                .also {
-                    it.setAnalyzer(backgroundExecutor) { image ->
-                        if (isRecording) {
-                            extractHolistic(image)
-                        }
-                        image.close()
+        imageAnalyzer = ImageAnalysis.Builder().setTargetAspectRatio(AspectRatio.RATIO_4_3)
+            .setTargetRotation(fragmentCameraBinding.viewFinder.display.rotation)
+            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+            .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888).build()
+            // The analyzer can then be assigned to the instance
+            .also {
+                it.setAnalyzer(backgroundExecutor) { image ->
+                    if (isRecording) {
+                        extractHolistic(image)
                     }
+                    image.close()
                 }
+            }
 
         // Must unbind the use-cases before rebinding them
         cameraProvider.unbindAll()
@@ -334,8 +478,7 @@ class CameraFragment : Fragment() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        imageAnalyzer?.targetRotation =
-            fragmentCameraBinding.viewFinder.display.rotation
+        imageAnalyzer?.targetRotation = fragmentCameraBinding.viewFinder.display.rotation
     }
 
     private var settingPopupVisibilityDuration: Long = 0
@@ -343,8 +486,7 @@ class CameraFragment : Fragment() {
 
     private fun startAnimationOfSquare() {
         settingPopupVisibilityDuration =
-            resources.getInteger(android.R.integer.config_shortAnimTime)
-                .toLong()
+            resources.getInteger(android.R.integer.config_shortAnimTime).toLong()
         if (currentAnimator != null) {
             currentAnimator?.cancel()
         }
@@ -358,8 +500,7 @@ class CameraFragment : Fragment() {
             TransitionSet().addTransition(ChangeBounds())
                 .setDuration(settingPopupVisibilityDuration)
         )
-        val params: ViewGroup.LayoutParams =
-            fragmentCameraBinding.ivSquare.layoutParams
+        val params: ViewGroup.LayoutParams = fragmentCameraBinding.ivSquare.layoutParams
         params.height = dpToPx(40f)
         params.width = dpToPx(40f)
         fragmentCameraBinding.ivSquare.layoutParams = params
@@ -397,8 +538,7 @@ class CameraFragment : Fragment() {
             TransitionSet().addTransition(ChangeBounds())
                 .setDuration(settingPopupVisibilityDuration)
         )
-        val params: ViewGroup.LayoutParams =
-            fragmentCameraBinding.ivSquare.layoutParams
+        val params: ViewGroup.LayoutParams = fragmentCameraBinding.ivSquare.layoutParams
         params.width = dpToPx(80f)
         params.height = dpToPx(80f)
         fragmentCameraBinding.ivSquare.layoutParams = params
@@ -452,5 +592,39 @@ class CameraFragment : Fragment() {
 
     private fun extractHolistic(imageProxy: ImageProxy) {
         holisticLandmarkerHelper.detectLiveStreamCamera(imageProxy, true)
+    }
+
+    override fun onError(error: String, errorCode: Int) {
+        Log.e(
+            TAG, "HolisticLandmarkerHelper error: $error, code: $errorCode"
+        )
+    }
+
+    override fun onResults(result: HolisticLandmarkerResult) {
+        // 543 landmarks (33 pose landmarks, 468 face landmarks, and 21 hand landmarks per hand)
+        val data = Array(543) { FloatArray(3) { Float.NaN } }
+        result.faceLandmarks().forEachIndexed { index, normalizedLandmark ->
+            if (index < LandmarkIndex.LEFT_HANDLANDMARK_INDEX) {
+                data[index + LandmarkIndex.FACE_LANDMARK_INDEX][0] = normalizedLandmark.x()
+                data[index + LandmarkIndex.FACE_LANDMARK_INDEX][1] = normalizedLandmark.y()
+                data[index + LandmarkIndex.FACE_LANDMARK_INDEX][2] = normalizedLandmark.z()
+            }
+        }
+        result.leftHandLandmarks().forEachIndexed { index, normalizedLandmark ->
+            data[index + LandmarkIndex.LEFT_HANDLANDMARK_INDEX][0] = normalizedLandmark.x()
+            data[index + LandmarkIndex.LEFT_HANDLANDMARK_INDEX][1] = normalizedLandmark.y()
+            data[index + LandmarkIndex.LEFT_HANDLANDMARK_INDEX][2] = normalizedLandmark.z()
+        }
+        result.poseLandmarks().forEachIndexed { index, normalizedLandmark ->
+            data[index + LandmarkIndex.POSE_LANDMARK_INDEX][0] = normalizedLandmark.x()
+            data[index + LandmarkIndex.POSE_LANDMARK_INDEX][1] = normalizedLandmark.y()
+            data[index + LandmarkIndex.POSE_LANDMARK_INDEX][2] = normalizedLandmark.z()
+        }
+        result.rightHandLandmarks().forEachIndexed { index, normalizedLandmark ->
+            data[index + LandmarkIndex.RIGHT_HANDLANDMARK_INDEX][0] = normalizedLandmark.x()
+            data[index + LandmarkIndex.RIGHT_HANDLANDMARK_INDEX][1] = normalizedLandmark.y()
+            data[index + LandmarkIndex.RIGHT_HANDLANDMARK_INDEX][2] = normalizedLandmark.z()
+        }
+        inputArray.add(data)
     }
 }

@@ -16,6 +16,13 @@ import com.google.mediapipe.tasks.vision.holisticlandmarker.HolisticLandmarkerRe
 
 class HolisticLandmarkerHelper(
     private var runningMode: RunningMode = RunningMode.IMAGE, private val context: Context,
+    val minFacePresenceConfidence: Float,
+    val minHandLandmarksConfidence: Float,
+    val minPosePresenceConfidence: Float,
+    val minFaceDetectionConfidence: Float,
+    val minPoseDetectionConfidence: Float,
+    val minFaceSuppressionThreshold: Float,
+    val minPoseSuppressionThreshold: Float,
     // this listener is only used when running in RunningMode.LIVE_STREAM
     private val landmarkerHelperListener: LandmarkerListener? = null
 ) {
@@ -25,13 +32,16 @@ class HolisticLandmarkerHelper(
             "holistic_landmarker.task"
         const val TAG = "HolisticLandmarkerHelper"
         const val OTHER_ERROR = 0
-        const val DEFAULT_MIN_FACE_PRESENCE_CONFIDENCE = 0.1F
-        const val DEFAULT_MIN_HAND_LANDMARKS_CONFIDENCE = 0.0F
-        const val DEFAULT_MIN_POSE_PRESENCE_CONFIDENCE = 0.1F
-        const val DEFAULT_MIN_FACE_DETECTION_CONFIDENCE = 0.0F
-        const val DEFAULT_MIN_POSE_DETECTION_CONFIDENCE = 0.0F
-        const val DEFAULT_MIN_FACE_SUPPRESSION_THRESHOLD = 0.1F
-        const val DEFAULT_MIN_POSE_SUPPRESSION_THRESHOLD = 0.1F
+        const val DEFAULT_MIN_FACE_PRESENCE_CONFIDENCE = 0.5F
+        const val DEFAULT_MIN_HAND_LANDMARKS_CONFIDENCE = 0.5F
+        const val DEFAULT_MIN_POSE_PRESENCE_CONFIDENCE = 0F
+        const val DEFAULT_MIN_FACE_DETECTION_CONFIDENCE = 0.5F
+        const val DEFAULT_MIN_POSE_DETECTION_CONFIDENCE = 0F
+        const val DEFAULT_MIN_FACE_SUPPRESSION_THRESHOLD = 0.5F
+        const val DEFAULT_MIN_POSE_SUPPRESSION_THRESHOLD = 0F
+
+        const val MIN_CONFIDENCE = 0F
+        const val MAX_CONFIDENCE = 1F
     }
 
     private var holisticLandmarker: HolisticLandmarker? = null
@@ -65,13 +75,13 @@ class HolisticLandmarkerHelper(
             val optionsBuilder =
                 HolisticLandmarker.HolisticLandmarkerOptions.builder()
                     .setBaseOptions(baseOptions).setRunningMode(runningMode)
-                    .setMinHandLandmarksConfidence(DEFAULT_MIN_HAND_LANDMARKS_CONFIDENCE)
-                    .setMinFaceDetectionConfidence(DEFAULT_MIN_FACE_DETECTION_CONFIDENCE)
-                    .setMinPoseDetectionConfidence(DEFAULT_MIN_POSE_DETECTION_CONFIDENCE)
-                    .setMinFaceSuppressionThreshold(DEFAULT_MIN_FACE_SUPPRESSION_THRESHOLD)
-                    .setMinPoseSuppressionThreshold(DEFAULT_MIN_POSE_SUPPRESSION_THRESHOLD)
-                    .setMinFacePresenceConfidence(DEFAULT_MIN_FACE_PRESENCE_CONFIDENCE)
-                    .setMinPosePresenceConfidence(DEFAULT_MIN_POSE_PRESENCE_CONFIDENCE)
+                    .setMinHandLandmarksConfidence(minHandLandmarksConfidence)
+                    .setMinFaceDetectionConfidence(minFaceDetectionConfidence)
+                    .setMinPoseDetectionConfidence(minPoseDetectionConfidence)
+                    .setMinFaceSuppressionThreshold(minFaceSuppressionThreshold)
+                    .setMinPoseSuppressionThreshold(minPoseSuppressionThreshold)
+                    .setMinFacePresenceConfidence(minFacePresenceConfidence)
+                    .setMinPosePresenceConfidence(minPosePresenceConfidence)
 
             // The ResultListener and ErrorListener only use for LIVE_STREAM mode.
             if (runningMode == RunningMode.LIVE_STREAM) {
@@ -102,21 +112,6 @@ class HolisticLandmarkerHelper(
         }
     }
 
-
-    fun detectVideoFile(
-        bitmap: Bitmap, timestampMs: Long
-    ): HolisticLandmarkerResult? {
-        if (runningMode != RunningMode.VIDEO) {
-            throw IllegalArgumentException(
-                "Attempting to call detectVideoFile" + " while not using RunningMode.VIDEO"
-            )
-        }
-        // Convert the input Bitmap object to an MPImage object to run inference
-        val mpImage = BitmapImageBuilder(bitmap).build()
-
-        // Run holistic landmarker using MediaPipe Holistic Landmarker API
-        return holisticLandmarker?.detectForVideo(mpImage, timestampMs)
-    }
 
     fun detectLiveStreamCamera(imageProxy: ImageProxy, isFrontCamera: Boolean) {
         if (runningMode != RunningMode.LIVE_STREAM) {
