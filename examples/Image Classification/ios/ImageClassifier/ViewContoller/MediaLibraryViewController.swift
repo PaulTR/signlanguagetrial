@@ -262,7 +262,7 @@ extension MediaLibraryViewController: UIImagePickerControllerDelegate, UINavigat
   
   func clearAndInitializeImageClassifierService() {
     imageClassifierService = ImageClassifierService(
-      model: DefaultConstants.modelInfo,
+      model: InferenceConfigManager.sharedInstance.model,
       scoreThreshold: InferenceConfigManager.sharedInstance.scoreThreshold,
       maxResult: InferenceConfigManager.sharedInstance.maxResults
         )

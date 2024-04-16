@@ -49,13 +49,10 @@ class ImageClassifierService: NSObject {
   private var modelPath: String
 
   // MARK: - Custom Initializer
-  init?(model: FileInfo, scoreThreshold: Float, maxResult: Int) {
+  init?(model: Model, scoreThreshold: Float, maxResult: Int) {
     // Construct the path to the model file.
-    guard let modelPath = Bundle.main.path(
-      forResource: model.name,
-      ofType: model.extension
-    ) else {
-      print("Failed to load the model file with name: \(model.name).")
+    guard let modelPath = model.modelPath else {
+      print("Failed to load the model : \(model.rawValue).")
       return nil
     }
     self.modelPath = modelPath

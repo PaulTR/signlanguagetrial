@@ -43,11 +43,11 @@ class BottomSheetViewController: UIViewController {
   @IBOutlet weak var maxResultStepper: UIStepper!
   @IBOutlet weak var maxResultLabel: UILabel!
 
+  @IBOutlet weak var choseModelButton: UIButton!
+
   @IBOutlet weak var toggleBottomSheetButton: UIButton!
 
   @IBOutlet weak var tableView: UITableView!
-
-  private var labels: [String] = []
 
   // MARK: Constants
   private let normalCellHeight: CGFloat = 27.0
@@ -67,7 +67,6 @@ class BottomSheetViewController: UIViewController {
     super.viewDidLoad()
     setupUI()
     enableOrDisableClicks()
-    loadLabels(labelFileInfo: DefaultConstants.labelInfo)
   }
   
   // MARK: - Public Functions
@@ -86,6 +85,21 @@ class BottomSheetViewController: UIViewController {
     thresholdStepper.value = Double(InferenceConfigManager.sharedInstance.scoreThreshold)
     thresholdValueLabel.text = "\(InferenceConfigManager.sharedInstance.scoreThreshold)"
 
+    // Chose model option
+    let choseModel = {(action: UIAction) in
+      self.updateModel(modelTitle: action.title)
+    }
+    let actions: [UIAction] = Model.allCases.compactMap { model in
+      let action = UIAction(title: model.rawValue, handler: choseModel)
+      if model == InferenceConfigManager.sharedInstance.model {
+        action.state = .on
+      }
+      return action
+    }
+    choseModelButton.menu = UIMenu(children: actions)
+    choseModelButton.showsMenuAsPrimaryAction = true
+    choseModelButton.changesSelectionAsPrimaryAction = true
+
     // Setup table view cell height
     tableView.rowHeight = normalCellHeight
   }
@@ -94,21 +108,9 @@ class BottomSheetViewController: UIViewController {
     thresholdStepper.isEnabled = isUIEnabled
   }
 
-  /// Loads the labels from the labels file and stores them in the `labels` property.
-  private func loadLabels(labelFileInfo: FileInfo) {
-    let filename = labelFileInfo.name
-    let fileExtension = labelFileInfo.extension
-    guard let fileURL = Bundle.main.url(forResource: filename, withExtension: fileExtension) else {
-      fatalError("Labels file not found in bundle. Please add a labels file with name " +
-                   "\(filename).\(fileExtension) and try again.")
-    }
-    do {
-      let contents = try String(contentsOf: fileURL, encoding: .utf8)
-      labels = contents.components(separatedBy: .newlines)
-    } catch {
-      fatalError("Labels file named \(filename).\(fileExtension) cannot be read. Please add a " +
-                   "valid labels file and try again.")
-    }
+  private func updateModel(modelTitle: String) {
+    guard let model = Model(rawValue: modelTitle) else { return }
+    InferenceConfigManager.sharedInstance.model = model
   }
 
   // MARK: IBAction
@@ -147,8 +149,7 @@ extension BottomSheetViewController: UITableViewDataSource {
     }
     if indexPath.row < classification.categories.count {
       let category = classification.categories[indexPath.row]
-      cell.fieldNameLabel.text = labels[category.index]
-      print("category.index: \(category.index)")
+      cell.fieldNameLabel.text = category.label
       cell.infoLabel.text = String(format: "%.2f", category.score)
     } else {
       cell.fieldNameLabel.text = "--"

@@ -21,6 +21,10 @@ import Foundation
  */
 class InferenceConfigManager: NSObject {
 
+  var model: Model = DefaultConstants.model {
+    didSet { postConfigChangedNotification() }
+  }
+
   var scoreThreshold: Float = DefaultConstants.scoreThreshold {
     didSet { postConfigChangedNotification() }
   }

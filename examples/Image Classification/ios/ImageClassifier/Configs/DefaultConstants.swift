@@ -20,15 +20,23 @@ import UIKit
 struct DefaultConstants {
   static let maxResults: Int = 3
   static let scoreThreshold: Float = 0.2
-  static let modelInfo: FileInfo = MobileNet.modelInfo
-  static let labelInfo: FileInfo = MobileNet.labelsInfo
+  static let model: Model = .efficientnetLite0
 }
 
-/// Information about a model file or labels file.
-typealias FileInfo = (name: String, extension: String)
 
-/// Information about the MobileNet model.
-enum MobileNet {
-  static let modelInfo: FileInfo = (name: "mobilenet_quant_v1_224", extension: "tflite")
-  static let labelsInfo: FileInfo = (name: "labels", extension: "txt")
+// MARK: Tflite Model
+enum Model: String, CaseIterable {
+    case efficientnetLite0 = "EfficientNet-Lite0"
+    case efficientnetLite2 = "EfficientNet-Lite2"
+
+    var modelPath: String? {
+        switch self {
+        case .efficientnetLite0:
+            return Bundle.main.path(
+                forResource: "efficientnet_lite0", ofType: "tflite")
+        case .efficientnetLite2:
+            return Bundle.main.path(
+                forResource: "efficientnet_lite2", ofType: "tflite")
+        }
+    }
 }

@@ -14,47 +14,20 @@
 # =============================================================================
 
 
-set -ex
-
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-MODELS_URL="https://storage.googleapis.com/download.tensorflow.org/models/tflite/mobilenet_v1_224_android_quant_2017_11_08.zip"
-DOWNLOADS_DIR=$(mktemp -d)
-
-cd "$SCRIPT_DIR"
-
-download_and_extract() {
-  local usage="Usage: download_and_extract URL DIR"
-  local url="${1:?${usage}}"
-  local dir="${2:?${usage}}"
-  echo "downloading ${url}" >&2
-  mkdir -p "${dir}"
-  tempdir=$(mktemp -d)
-  tempdir2=$(mktemp -d)
-
-  curl -L ${url} > ${tempdir}/zipped.zip
-  unzip ${tempdir}/zipped.zip -d ${tempdir2}
-
-  # If the zip file contains nested directories, extract the files from the
-  # inner directory.
-  if ls ${tempdir2}/*/* 1> /dev/null 2>&1; then
-    # unzip has no strip components, so unzip to a temp dir, and move the
-    # files we want from the tempdir to destination.
-    cp -R ${tempdir2}/*/* ${dir}/
-  else
-    cp -R ${tempdir2}/* ${dir}/
-  fi
-  rm -rf ${tempdir2} ${tempdir}
-}
-
-if [ -f ../ImageClassifier/Model/mobilenet_quant_v1_224.tflite ]
-then
-echo "File exists. Exiting..."
-exit 0
+# Download efficientnet_lite0.tflite from the internet if it's not exist.
+TFLITE_FILE=./ImageClassifier/efficientnet_lite0.tflite
+if test -f "$TFLITE_FILE"; then
+    echo "INFO: efficientnet_lite0.tflite existed. Skip downloading and use the local model."
+else
+    curl -o ${TFLITE_FILE} https://storage.googleapis.com/mediapipe-models/image_classifier/efficientnet_lite0/float32/1/efficientnet_lite0.tflite
+    echo "INFO: Downloaded efficientnet_lite0.tflite to $TFLITE_FILE ."
 fi
 
-download_and_extract "${MODELS_URL}" "${DOWNLOADS_DIR}/models"
-
-file ${DOWNLOADS_DIR}/models
-
-cp ${DOWNLOADS_DIR}/models/* ../ImageClassifier/Model
-
+# Download efficientnet_lite2.tflite from the internet if it's not exist.
+TFLITE_FILE=./ImageClassifier/efficientnet_lite2.tflite
+if test -f "$TFLITE_FILE"; then
+    echo "INFO: efficientnet_lite2.tflite existed. Skip downloading and use the local model."
+else
+    curl -o ${TFLITE_FILE} https://storage.googleapis.com/mediapipe-models/image_classifier/efficientnet_lite2/float32/1/efficientnet_lite2.tflite
+    echo "INFO: Downloaded efficientnet_lite2.tflite to $TFLITE_FILE ."
+fi

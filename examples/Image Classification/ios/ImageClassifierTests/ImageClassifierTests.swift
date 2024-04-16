@@ -19,25 +19,55 @@ import TensorFlowLiteTaskVision
 
 final class ImageClassifierTests: XCTestCase {
 
-  static let modeFileInfo = DefaultConstants.modelInfo
+  static let efficientnetLite0 = Model.efficientnetLite0
+  static let efficientnetLite2 = Model.efficientnetLite2
 
   static let scoreThreshold: Float = 0.01
   static let maxResult: Int = 3
-  
+
   static let testImage = UIImage(
     named: "cup.png",
     in:Bundle(for: ImageClassifierTests.self),
     compatibleWith: nil)!
 
-  static let results: [ClassificationCategory] = [
-    ClassificationCategory(index: 505, score: 0.7265625, label: nil, displayName: nil),
-    ClassificationCategory(index: 900, score: 0.140625, label: nil, displayName: nil),
-    ClassificationCategory(index: 850, score: 0.0703125, label: nil, displayName: nil)
-
+  static let efficientnetLite0Results = [
+    ClassificationCategory(
+      index: 504,
+      score: 0.6224187,
+      label: "coffee mug",
+      displayName: nil),
+    ClassificationCategory(
+      index: 968,
+      score: 0.13291624,
+      label: "cup",
+      displayName: nil),
+    ClassificationCategory(
+      index: 899,
+      score: 0.055026982,
+      label: "water jug",
+      displayName: nil),
   ]
 
-  func imageClassifierWithModelFileInfo(
-    _ model: FileInfo,
+  static let efficientnetLite2Results = [
+    ClassificationCategory(
+      index: 504,
+      score: 0.4353558,
+      label: "coffee mug",
+      displayName: nil),
+    ClassificationCategory(
+      index: 968,
+      score: 0.16430414,
+      label: "cup",
+      displayName: nil),
+    ClassificationCategory(
+      index: 725,
+      score: 0.017306592,
+      label: "pitcher",
+      displayName: nil),
+  ]
+
+  func imageClassifierWithModel(
+    _ model: Model,
     scoreThreshold: Float,
     maxResult: Int
   ) throws -> ImageClassifierService {
@@ -75,19 +105,32 @@ final class ImageClassifierTests: XCTestCase {
         format: """
               category[%d].score and expectedCategory[%d].score are not equal.
               """, indexInCategoryList))
+    XCTAssertEqual(
+      category.label,
+      expectedCategory.label,
+      String(
+        format: """
+              category[%d].categoryName and expectedCategory[%d].categoryName are \
+              not equal.
+              """, indexInCategoryList))
+    XCTAssertEqual(
+      category.displayName,
+      expectedCategory.displayName,
+      String(
+        format: """
+              category[%d].displayName and expectedCategory[%d].displayName are \
+              not equal.
+              """, indexInCategoryList))
   }
 
   func assertEqualCategoryArrays(
     categoryArray: [ClassificationCategory],
     expectedCategoryArray: [ClassificationCategory]
   ) {
-    for c in categoryArray {
-      print(c.index)
-      print(c.score)
-    }
     XCTAssertEqual(
       categoryArray.count,
       expectedCategoryArray.count)
+
     for (index, (category, expectedCategory)) in zip(categoryArray, expectedCategoryArray)
       .enumerated()
     {
@@ -113,15 +156,27 @@ final class ImageClassifierTests: XCTestCase {
         imageClassifierResult.classifications[0].categories,
       expectedCategoryArray: expectedCategories)
   }
-  func testClassifySucceeds() throws {
 
-    let imageClassifier = try imageClassifierWithModelFileInfo(
-      ImageClassifierTests.modeFileInfo,
+  func testClassifyWithEfficientnetLite0Succeeds() throws {
+    let imageClassifier = try imageClassifierWithModel(
+      ImageClassifierTests.efficientnetLite0,
       scoreThreshold: ImageClassifierTests.scoreThreshold,
       maxResult: ImageClassifierTests.maxResult)
     try assertResultsForClassify(
       image: ImageClassifierTests.testImage,
       using: imageClassifier,
-      equals: ImageClassifierTests.results)
+      equals: ImageClassifierTests.efficientnetLite0Results)
+  }
+
+  func testClassifyWithEfficientnetLite2Succeeds() throws {
+
+    let imageClassifier = try imageClassifierWithModel(
+      ImageClassifierTests.efficientnetLite2,
+      scoreThreshold: ImageClassifierTests.scoreThreshold,
+      maxResult: ImageClassifierTests.maxResult)
+    try assertResultsForClassify(
+      image: ImageClassifierTests.testImage,
+      using: imageClassifier,
+      equals: ImageClassifierTests.efficientnetLite2Results)
   }
 }
