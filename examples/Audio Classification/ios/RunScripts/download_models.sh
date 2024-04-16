@@ -15,7 +15,7 @@
 
 
 # Download yamnet.tflite from the internet if it's not exist.
-TFLITE_FILE=./AudioClassification/yamnet.tflite
+TFLITE_FILE=./AudioClassification/Services/yamnet.tflite
 if test -f "$TFLITE_FILE"; then
     echo "INFO: yamnet.tflite existed. Skip downloading and use the local model."
 else
@@ -24,7 +24,7 @@ else
 fi
 
 # Download speech_commands.tflite from the internet if it's not exist.
-TFLITE_FILE=./AudioClassification/speech_commands.tflite
+TFLITE_FILE=./AudioClassification/Services/speech_commands.tflite
 if test -f "$TFLITE_FILE"; then
     echo "INFO: speech_commands.tflite existed. Skip downloading and use the local model."
 else
