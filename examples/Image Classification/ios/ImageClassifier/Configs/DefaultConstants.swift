@@ -1,0 +1,34 @@
+// Copyright 2024 The TensorFlow Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// =============================================================================
+
+import Foundation
+import UIKit
+
+// MARK: Define default constants
+struct DefaultConstants {
+  static let maxResults: Int = 3
+  static let scoreThreshold: Float = 0.2
+  static let modelInfo: FileInfo = MobileNet.modelInfo
+  static let labelInfo: FileInfo = MobileNet.labelsInfo
+}
+
+/// Information about a model file or labels file.
+typealias FileInfo = (name: String, extension: String)
+
+/// Information about the MobileNet model.
+enum MobileNet {
+  static let modelInfo: FileInfo = (name: "mobilenet_quant_v1_224", extension: "tflite")
+  static let labelsInfo: FileInfo = (name: "labels", extension: "txt")
+}
