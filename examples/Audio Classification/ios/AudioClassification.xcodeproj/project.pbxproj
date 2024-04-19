@@ -14,11 +14,11 @@
 		BF5A2AFD2BC3CE0200A0ABAC /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BF5A2AFC2BC3CE0200A0ABAC /* Assets.xcassets */; };
 		BF5A2B002BC3CE0200A0ABAC /* Base in Resources */ = {isa = PBXBuildFile; fileRef = BF5A2AFF2BC3CE0200A0ABAC /* Base */; };
 		BF5A2B272BC3CFD800A0ABAC /* AudioClassificationHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF5A2B232BC3CFD800A0ABAC /* AudioClassificationHelper.swift */; };
-		BF5A2B282BC3CFD800A0ABAC /* speech_commands.tflite in Resources */ = {isa = PBXBuildFile; fileRef = BF5A2B242BC3CFD800A0ABAC /* speech_commands.tflite */; };
-		BF5A2B292BC3CFD800A0ABAC /* yamnet.tflite in Resources */ = {isa = PBXBuildFile; fileRef = BF5A2B252BC3CFD800A0ABAC /* yamnet.tflite */; };
 		BF5A2B2B2BC3D17A00A0ABAC /* InferenceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF5A2B2A2BC3D17A00A0ABAC /* InferenceView.swift */; };
 		BF5A2B2D2BC3D20F00A0ABAC /* ResultTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF5A2B2C2BC3D20F00A0ABAC /* ResultTableViewCell.swift */; };
 		BF5A2B322BC3D40C00A0ABAC /* DefaultConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF5A2B312BC3D40C00A0ABAC /* DefaultConstants.swift */; };
+		BFE921C32BD209E700372D5F /* speech_commands.tflite in Resources */ = {isa = PBXBuildFile; fileRef = BFE921C12BD209E700372D5F /* speech_commands.tflite */; };
+		BFE921C42BD209E700372D5F /* yamnet.tflite in Resources */ = {isa = PBXBuildFile; fileRef = BFE921C22BD209E700372D5F /* yamnet.tflite */; };
 		DC1E75C4F2AD273C59E6B96C /* Pods_AudioClassification.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D7EFDE0C16196D1BDC31A015 /* Pods_AudioClassification.framework */; };
 /* End PBXBuildFile section */
 
@@ -37,11 +37,11 @@
 		BF5A2B142BC3CE0200A0ABAC /* AudioClassificationUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioClassificationUITests.swift; sourceTree = "<group>"; };
 		BF5A2B162BC3CE0200A0ABAC /* AudioClassificationUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioClassificationUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		BF5A2B232BC3CFD800A0ABAC /* AudioClassificationHelper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AudioClassificationHelper.swift; sourceTree = "<group>"; };
-		BF5A2B242BC3CFD800A0ABAC /* speech_commands.tflite */ = {isa = PBXFileReference; lastKnownFileType = file; path = speech_commands.tflite; sourceTree = "<group>"; };
-		BF5A2B252BC3CFD800A0ABAC /* yamnet.tflite */ = {isa = PBXFileReference; lastKnownFileType = file; path = yamnet.tflite; sourceTree = "<group>"; };
 		BF5A2B2A2BC3D17A00A0ABAC /* InferenceView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InferenceView.swift; sourceTree = "<group>"; };
 		BF5A2B2C2BC3D20F00A0ABAC /* ResultTableViewCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ResultTableViewCell.swift; sourceTree = "<group>"; };
 		BF5A2B312BC3D40C00A0ABAC /* DefaultConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultConstants.swift; sourceTree = "<group>"; };
+		BFE921C12BD209E700372D5F /* speech_commands.tflite */ = {isa = PBXFileReference; lastKnownFileType = file; path = speech_commands.tflite; sourceTree = "<group>"; };
+		BFE921C22BD209E700372D5F /* yamnet.tflite */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = yamnet.tflite; sourceTree = "<group>"; };
 		D0B6F76E4B8425E1C75565D4 /* Pods_AudioClassificationTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_AudioClassificationTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		D7EFDE0C16196D1BDC31A015 /* Pods_AudioClassification.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_AudioClassification.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		F03EF816E62C24A93A383802 /* Pods-AudioClassification.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-AudioClassification.release.xcconfig"; path = "Target Support Files/Pods-AudioClassification/Pods-AudioClassification.release.xcconfig"; sourceTree = "<group>"; };
@@ -104,6 +104,8 @@
 				BF5A2AFC2BC3CE0200A0ABAC /* Assets.xcassets */,
 				BF5A2AFE2BC3CE0200A0ABAC /* LaunchScreen.storyboard */,
 				BF5A2B012BC3CE0200A0ABAC /* Info.plist */,
+				BFE921C12BD209E700372D5F /* speech_commands.tflite */,
+				BFE921C22BD209E700372D5F /* yamnet.tflite */,
 			);
 			path = AudioClassification;
 			sourceTree = "<group>";
@@ -129,8 +131,6 @@
 			isa = PBXGroup;
 			children = (
 				BF5A2B232BC3CFD800A0ABAC /* AudioClassificationHelper.swift */,
-				BF5A2B242BC3CFD800A0ABAC /* speech_commands.tflite */,
-				BF5A2B252BC3CFD800A0ABAC /* yamnet.tflite */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -176,6 +176,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = BF5A2B1A2BC3CE0200A0ABAC /* Build configuration list for PBXNativeTarget "AudioClassification" */;
 			buildPhases = (
+				BFE921C02BD2086700372D5F /* Download models */,
 				330D2C2FF069EBC05BA9D767 /* [CP] Check Pods Manifest.lock */,
 				BF5A2AEC2BC3CDFF00A0ABAC /* Sources */,
 				BF5A2AED2BC3CDFF00A0ABAC /* Frameworks */,
@@ -229,8 +230,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				BF5A2AFD2BC3CE0200A0ABAC /* Assets.xcassets in Resources */,
-				BF5A2B282BC3CFD800A0ABAC /* speech_commands.tflite in Resources */,
-				BF5A2B292BC3CFD800A0ABAC /* yamnet.tflite in Resources */,
+				BFE921C32BD209E700372D5F /* speech_commands.tflite in Resources */,
+				BFE921C42BD209E700372D5F /* yamnet.tflite in Resources */,
 				BF5A2B002BC3CE0200A0ABAC /* Base in Resources */,
 				BF5A2AFB2BC3CDFF00A0ABAC /* Base in Resources */,
 			);
@@ -260,6 +261,25 @@
 			shellPath = /bin/sh;
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
+		};
+		BFE921C02BD2086700372D5F /* Download models */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Download models";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"$SRCROOT/RunScripts/download_models.sh\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -337,7 +357,7 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -400,7 +420,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -425,9 +445,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = H83UK2M7VU;
+				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = AudioClassification/Info.plist;
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app will use the microphone to get audio input in order to classify the sound made by user.";
@@ -443,6 +464,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.google.mediapipe.examples.imageembedder.AudioClassification;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -455,9 +477,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = H83UK2M7VU;
+				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = AudioClassification/Info.plist;
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app will use the microphone to get audio input in order to classify the sound made by user.";
@@ -473,6 +496,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.google.mediapipe.examples.imageembedder.AudioClassification;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
