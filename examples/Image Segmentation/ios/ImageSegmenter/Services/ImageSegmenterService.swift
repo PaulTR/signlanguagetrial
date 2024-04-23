@@ -17,20 +17,8 @@ import UIKit
 import TensorFlowLiteTaskVision
 import AVFoundation
 
-/**
- This protocol must be adopted by any class that wants to get the segmention results of the image segmenter in live stream mode.
- */
-protocol ImageSegmenterServiceLiveStreamDelegate: AnyObject {
-  func imageSegmenterService(_ imageSegmenterService: ImageSegmenterService,
-                             didFinishSegmention result: ResultBundle?,
-                             error: Error?)
-}
-
 // Initializes and calls the Tflite APIs for segmention.
 class ImageSegmenterService: NSObject {
-
-  weak var liveStreamDelegate: ImageSegmenterServiceLiveStreamDelegate?
-  //  weak var videoDelegate: ImageSegmenterServiceVideoDelegate?
 
   var imageSegmenter: ImageSegmenter?
   var modelPath: String
@@ -46,6 +34,7 @@ class ImageSegmenterService: NSObject {
 
   private func createImageSegmenter() {
     let imageSegmenterOptions = ImageSegmenterOptions(modelPath: modelPath)
+
     imageSegmenterOptions.outputType = .categoryMask
     do {
       imageSegmenter = try ImageSegmenter.segmenter(options: imageSegmenterOptions)
