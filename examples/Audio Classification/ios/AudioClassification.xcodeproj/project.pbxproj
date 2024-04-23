@@ -17,8 +17,8 @@
 		BF5A2B2B2BC3D17A00A0ABAC /* InferenceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF5A2B2A2BC3D17A00A0ABAC /* InferenceView.swift */; };
 		BF5A2B2D2BC3D20F00A0ABAC /* ResultTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF5A2B2C2BC3D20F00A0ABAC /* ResultTableViewCell.swift */; };
 		BF5A2B322BC3D40C00A0ABAC /* DefaultConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF5A2B312BC3D40C00A0ABAC /* DefaultConstants.swift */; };
-		BFE921C32BD209E700372D5F /* speech_commands.tflite in Resources */ = {isa = PBXBuildFile; fileRef = BFE921C12BD209E700372D5F /* speech_commands.tflite */; };
-		BFE921C42BD209E700372D5F /* yamnet.tflite in Resources */ = {isa = PBXBuildFile; fileRef = BFE921C22BD209E700372D5F /* yamnet.tflite */; };
+		BFB819572BD755B200C71A36 /* yamnet.tflite in Resources */ = {isa = PBXBuildFile; fileRef = BFB819552BD755B200C71A36 /* yamnet.tflite */; };
+		BFB819582BD755B200C71A36 /* speech_commands.tflite in Resources */ = {isa = PBXBuildFile; fileRef = BFB819562BD755B200C71A36 /* speech_commands.tflite */; };
 		DC1E75C4F2AD273C59E6B96C /* Pods_AudioClassification.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D7EFDE0C16196D1BDC31A015 /* Pods_AudioClassification.framework */; };
 /* End PBXBuildFile section */
 
@@ -33,15 +33,12 @@
 		BF5A2AFC2BC3CE0200A0ABAC /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		BF5A2AFF2BC3CE0200A0ABAC /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		BF5A2B012BC3CE0200A0ABAC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		BF5A2B0A2BC3CE0200A0ABAC /* AudioClassificationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioClassificationTests.swift; sourceTree = "<group>"; };
-		BF5A2B142BC3CE0200A0ABAC /* AudioClassificationUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioClassificationUITests.swift; sourceTree = "<group>"; };
-		BF5A2B162BC3CE0200A0ABAC /* AudioClassificationUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioClassificationUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		BF5A2B232BC3CFD800A0ABAC /* AudioClassificationHelper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AudioClassificationHelper.swift; sourceTree = "<group>"; };
 		BF5A2B2A2BC3D17A00A0ABAC /* InferenceView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InferenceView.swift; sourceTree = "<group>"; };
 		BF5A2B2C2BC3D20F00A0ABAC /* ResultTableViewCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ResultTableViewCell.swift; sourceTree = "<group>"; };
 		BF5A2B312BC3D40C00A0ABAC /* DefaultConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultConstants.swift; sourceTree = "<group>"; };
-		BFE921C12BD209E700372D5F /* speech_commands.tflite */ = {isa = PBXFileReference; lastKnownFileType = file; path = speech_commands.tflite; sourceTree = "<group>"; };
-		BFE921C22BD209E700372D5F /* yamnet.tflite */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = yamnet.tflite; sourceTree = "<group>"; };
+		BFB819552BD755B200C71A36 /* yamnet.tflite */ = {isa = PBXFileReference; lastKnownFileType = file; path = yamnet.tflite; sourceTree = "<group>"; };
+		BFB819562BD755B200C71A36 /* speech_commands.tflite */ = {isa = PBXFileReference; lastKnownFileType = file; path = speech_commands.tflite; sourceTree = "<group>"; };
 		D0B6F76E4B8425E1C75565D4 /* Pods_AudioClassificationTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_AudioClassificationTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		D7EFDE0C16196D1BDC31A015 /* Pods_AudioClassification.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_AudioClassification.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		F03EF816E62C24A93A383802 /* Pods-AudioClassification.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-AudioClassification.release.xcconfig"; path = "Target Support Files/Pods-AudioClassification/Pods-AudioClassification.release.xcconfig"; sourceTree = "<group>"; };
@@ -75,8 +72,6 @@
 			isa = PBXGroup;
 			children = (
 				BF5A2AF22BC3CDFF00A0ABAC /* AudioClassification */,
-				BF5A2B092BC3CE0200A0ABAC /* AudioClassificationTests */,
-				BF5A2B132BC3CE0200A0ABAC /* AudioClassificationUITests */,
 				BF5A2AF12BC3CDFF00A0ABAC /* Products */,
 				5263BCDB7AF889CB8532DF06 /* Pods */,
 				DCF7B3A376D7D9C8AE8C27E5 /* Frameworks */,
@@ -104,32 +99,15 @@
 				BF5A2AFC2BC3CE0200A0ABAC /* Assets.xcassets */,
 				BF5A2AFE2BC3CE0200A0ABAC /* LaunchScreen.storyboard */,
 				BF5A2B012BC3CE0200A0ABAC /* Info.plist */,
-				BFE921C12BD209E700372D5F /* speech_commands.tflite */,
-				BFE921C22BD209E700372D5F /* yamnet.tflite */,
 			);
 			path = AudioClassification;
-			sourceTree = "<group>";
-		};
-		BF5A2B092BC3CE0200A0ABAC /* AudioClassificationTests */ = {
-			isa = PBXGroup;
-			children = (
-				BF5A2B0A2BC3CE0200A0ABAC /* AudioClassificationTests.swift */,
-			);
-			path = AudioClassificationTests;
-			sourceTree = "<group>";
-		};
-		BF5A2B132BC3CE0200A0ABAC /* AudioClassificationUITests */ = {
-			isa = PBXGroup;
-			children = (
-				BF5A2B142BC3CE0200A0ABAC /* AudioClassificationUITests.swift */,
-				BF5A2B162BC3CE0200A0ABAC /* AudioClassificationUITestsLaunchTests.swift */,
-			);
-			path = AudioClassificationUITests;
 			sourceTree = "<group>";
 		};
 		BF5A2B262BC3CFD800A0ABAC /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				BFB819562BD755B200C71A36 /* speech_commands.tflite */,
+				BFB819552BD755B200C71A36 /* yamnet.tflite */,
 				BF5A2B232BC3CFD800A0ABAC /* AudioClassificationHelper.swift */,
 			);
 			path = Services;
@@ -176,8 +154,8 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = BF5A2B1A2BC3CE0200A0ABAC /* Build configuration list for PBXNativeTarget "AudioClassification" */;
 			buildPhases = (
-				BFE921C02BD2086700372D5F /* Download models */,
 				330D2C2FF069EBC05BA9D767 /* [CP] Check Pods Manifest.lock */,
+				BFE921C02BD2086700372D5F /* Download models */,
 				BF5A2AEC2BC3CDFF00A0ABAC /* Sources */,
 				BF5A2AED2BC3CDFF00A0ABAC /* Frameworks */,
 				BF5A2AEE2BC3CDFF00A0ABAC /* Resources */,
@@ -230,8 +208,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				BF5A2AFD2BC3CE0200A0ABAC /* Assets.xcassets in Resources */,
-				BFE921C32BD209E700372D5F /* speech_commands.tflite in Resources */,
-				BFE921C42BD209E700372D5F /* yamnet.tflite in Resources */,
+				BFB819582BD755B200C71A36 /* speech_commands.tflite in Resources */,
+				BFB819572BD755B200C71A36 /* yamnet.tflite in Resources */,
 				BF5A2B002BC3CE0200A0ABAC /* Base in Resources */,
 				BF5A2AFB2BC3CDFF00A0ABAC /* Base in Resources */,
 			);
