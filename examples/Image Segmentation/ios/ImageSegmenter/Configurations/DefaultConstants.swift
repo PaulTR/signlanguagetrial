@@ -23,13 +23,10 @@ struct DefaultConstants {
 
 // MARK: Model
 enum Model: Int, CaseIterable {
-//  case selfieSegmenter
   case deeplabV3
 
   var name: String {
     switch self {
-//    case .selfieSegmenter:
-//      return "Selfie segmenter"
     case .deeplabV3:
       return "Deeplab V3"
     }
@@ -37,9 +34,6 @@ enum Model: Int, CaseIterable {
 
   var modelPath: String? {
     switch self {
-//    case .selfieSegmenter:
-//      return Bundle.main.path(
-//        forResource: "selfie_segmenter", ofType: "tflite")
     case .deeplabV3:
       return Bundle.main.path(
         forResource: "deeplab_v3", ofType: "tflite")
@@ -48,8 +42,6 @@ enum Model: Int, CaseIterable {
 
   init?(name: String) {
     switch name {
-//    case "Selfie segmenter":
-//      self.init(rawValue: 0)
     case "Deeplab V3":
       self.init(rawValue: 1)
     default:

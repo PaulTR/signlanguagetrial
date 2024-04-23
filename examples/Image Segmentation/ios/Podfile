@@ -7,14 +7,4 @@ target 'ImageSegmenter' do
 
   pod 'TensorFlowLiteTaskVision'
 
-  target 'ImageSegmenterTests' do
-    inherit! :search_paths
-    # Pods for testing
-  end
 end
-
-target 'ImageSegmenterUITests' do
-  inherit! :search_paths
-  # Pods for testing
-end
-
