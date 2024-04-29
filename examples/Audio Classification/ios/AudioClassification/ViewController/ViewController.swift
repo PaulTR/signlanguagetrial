@@ -34,6 +34,7 @@ class ViewController: UIViewController {
 
   override func viewDidLoad() {
     super.viewDidLoad()
+    inferenceView.delegate = self
     inferenceView.setDefault()
     startAudioClassification()
   }
