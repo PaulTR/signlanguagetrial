@@ -14,7 +14,6 @@
 // =============================================================================
 
 import UIKit
-import TensorFlowLiteTaskText
 
 class ViewController: UIViewController {
 
@@ -91,8 +90,8 @@ class ViewController: UIViewController {
       DispatchQueue.main.async {
         self.inferenceTimeLabel.text = String(format: "%.3f ms", result.inferenceTime)
         self.outputLabel.text = String(format: "Positive: (%.3f)\nNegative: (%.3f)",
-                                       Float(truncating: result.categories["positive"] ?? 0),
-                                       Float(truncating: result.categories["negative"] ?? 0))
+                                       result.categories["positive"]!,
+                                       result.categories["negative"]!)
       }
     }
   }

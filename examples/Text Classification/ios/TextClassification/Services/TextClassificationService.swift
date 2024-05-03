@@ -13,41 +13,68 @@
 // limitations under the License.
 // =============================================================================
 
-import TensorFlowLiteTaskText
+import TensorFlowLite
+import Foundation
 
 class TextClassificationService {
 
-  var tFLNLClassifier: TFLNLClassifier?
-  var tFLBertNLClassifier: TFLBertNLClassifier?
-
-  var usingModel: Model
+  private var interpreter: Interpreter!
+  private var tokenizer: WordpieceTokenizer!
 
   init(model: Model) {
-    usingModel = model
-    switch model {
-    case .mobileBert:
-      guard let modelPath = model.modelPath else { return }
-      tFLBertNLClassifier = TFLBertNLClassifier.bertNLClassifier(modelPath: modelPath)
-    case .avgWordClassifier:
-      guard let modelPath = model.modelPath else { return }
-      let options = TFLNLClassifierOptions()
-      tFLNLClassifier = TFLNLClassifier.nlClassifier(modelPath: modelPath, options: options)
+    guard
+      let modelPath = model.modelPath
+    else {
+      fatalError("Failed to load the model file: \(model.rawValue)")
     }
+    let options = Interpreter.Options()
+    do {
+      // Create the `Interpreter`.
+      interpreter = try Interpreter(modelPath: modelPath, options: options)
+
+      // Initialize input and output `Tensor`s.
+      try interpreter.allocateTensors()
+
+    } catch {
+      print(error)
+    }
+    tokenizer = WordpieceTokenizer(with: model)
   }
 
   func classify(text: String) -> ClassificationResult? {
-    let startTime = Date().timeIntervalSince1970
-    switch usingModel {
-    case .mobileBert:
-      guard let result = tFLBertNLClassifier?.classify(text: text) else { return nil }
-      return ClassificationResult(inferenceTime: 1000 * (Date().timeIntervalSince1970 - startTime),
-                                  categories: result)
-    case .avgWordClassifier:
-      guard let result = tFLNLClassifier?.classify(text: text) else { return nil }
-      let newResult: [String: NSNumber] = ["positive": result["1"] ?? 0, "negative": result["0"] ?? 0]
-      return ClassificationResult(inferenceTime: 1000 * (Date().timeIntervalSince1970 - startTime),
-                                  categories: newResult)
+    let inputIds = getIds(input: text)
+
+    // MARK: - Inferencing
+    let inferenceStartTime = Date()
+
+    do {
+
+      let inputShape = try interpreter.input(at: 0).shape
+      var inputBuffer = [Int32](repeating: 0, count: inputShape.dimensions[1])
+      inputBuffer.replaceSubrange(0..<inputIds.count, with: inputIds)
+      let inputIdsData = Data(copyingBufferOf: inputBuffer)
+      // Assign input `Data` to the `interpreter`.
+      try interpreter.copy(inputIdsData, toInputAt: 0)
+
+      try interpreter.invoke()
+
+      // Get the output `Tensor` to process the inference results
+      let outputTensor = try interpreter.output(at: 0)
+      let output = outputTensor.data.toArray(type: Float32.self)
+      let inferenceTime = Date().timeIntervalSince(inferenceStartTime) * 1000
+//    labels: negative(0) & positive(1)
+      let result = ClassificationResult(inferenceTime: inferenceTime, categories:
+                                          ["negative" : output[0], "positive": output[1]])
+      return result
+    } catch let error {
+      print(error)
+      return nil
     }
+  }
+
+  private func getIds(input: String) -> [Int32] {
+    let tokens = tokenizer.tokenize(input)
+    return tokenizer.convertToIDs(tokens: tokens)
   }
 }
 
@@ -65,9 +92,40 @@ enum Model: String, CaseIterable {
         forResource: "average_word_classifier", ofType: "tflite")
     }
   }
+
+  var vocabPath: String? {
+    switch self {
+    case .mobileBert:
+      return Bundle.main.path(
+        forResource: "bert_vocab", ofType: "txt")
+    case .avgWordClassifier:
+      return Bundle.main.path(
+        forResource: "average_vocab", ofType: "txt")
+    }
+  }
 }
 
 struct ClassificationResult {
   let inferenceTime: Double
-  let categories: [String: NSNumber]
+  let categories: [String: Float32]
+}
+
+// MARK: - Data extension
+extension Data {
+  /// Creates a new buffer by copying the buffer pointer of the given array.
+  ///
+  /// - Warning: The given array's element type `T` must be trivial in that it can be copied bit
+  ///     for bit with no indirection or reference-counting operations; otherwise, reinterpreting
+  ///     data from the resulting buffer has undefined behavior.
+  /// - Parameter array: An array with elements of type `T`.
+  init<T>(copyingBufferOf array: [T]) {
+    self = array.withUnsafeBufferPointer(Data.init)
+  }
+
+  /// Convert a Data instance to Array representation.
+  func toArray<T>(type: T.Type) -> [T] where T: AdditiveArithmetic {
+    var array = [T](repeating: T.zero, count: self.count / MemoryLayout<T>.stride)
+    _ = array.withUnsafeMutableBytes { self.copyBytes(to: $0) }
+    return array
+  }
 }

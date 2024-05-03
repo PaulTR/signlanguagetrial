@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 54;
+	objectVersion = 50;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -13,6 +13,10 @@
 		7F2AAA5822FAB86C00C66F75 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7F2AAA5722FAB86C00C66F75 /* Assets.xcassets */; };
 		7F2AAA5B22FAB86C00C66F75 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 7F2AAA5922FAB86C00C66F75 /* LaunchScreen.storyboard */; };
 		988E024BBDD5EDF43E0F931D /* Pods_TextClassification.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F7AD92C95AE1E2AE57F64D86 /* Pods_TextClassification.framework */; };
+		BF4F3D502BE4A6BB0040E750 /* WordpieceTokenizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF4F3D4F2BE4A6BB0040E750 /* WordpieceTokenizer.swift */; };
+		BF4F3D542BE4C2C40040E750 /* FileLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF4F3D532BE4C2C40040E750 /* FileLoader.swift */; };
+		BF4F3D562BE4D7EC0040E750 /* average_vocab.txt in Resources */ = {isa = PBXBuildFile; fileRef = BF4F3D552BE4D7EC0040E750 /* average_vocab.txt */; };
+		BF4F3D582BE4D7F30040E750 /* bert_vocab.txt in Resources */ = {isa = PBXBuildFile; fileRef = BF4F3D572BE4D7F30040E750 /* bert_vocab.txt */; };
 		BF5E08EC2BDB4A55000F9F36 /* TextClassificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF5E08EB2BDB4A55000F9F36 /* TextClassificationService.swift */; };
 		BF5E08EF2BDB553B000F9F36 /* average_word_classifier.tflite in Resources */ = {isa = PBXBuildFile; fileRef = BF5E08ED2BDB553B000F9F36 /* average_word_classifier.tflite */; };
 		BF5E08F02BDB553B000F9F36 /* bert_classifier.tflite in Resources */ = {isa = PBXBuildFile; fileRef = BF5E08EE2BDB553B000F9F36 /* bert_classifier.tflite */; };
@@ -28,6 +32,10 @@
 		7F2AAA5722FAB86C00C66F75 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		7F2AAA5A22FAB86C00C66F75 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		7F2AAA5C22FAB86C00C66F75 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		BF4F3D4F2BE4A6BB0040E750 /* WordpieceTokenizer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WordpieceTokenizer.swift; sourceTree = "<group>"; };
+		BF4F3D532BE4C2C40040E750 /* FileLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileLoader.swift; sourceTree = "<group>"; };
+		BF4F3D552BE4D7EC0040E750 /* average_vocab.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = average_vocab.txt; sourceTree = "<group>"; };
+		BF4F3D572BE4D7F30040E750 /* bert_vocab.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = bert_vocab.txt; sourceTree = "<group>"; };
 		BF5E08EB2BDB4A55000F9F36 /* TextClassificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextClassificationService.swift; sourceTree = "<group>"; };
 		BF5E08ED2BDB553B000F9F36 /* average_word_classifier.tflite */ = {isa = PBXFileReference; lastKnownFileType = file; path = average_word_classifier.tflite; sourceTree = "<group>"; };
 		BF5E08EE2BDB553B000F9F36 /* bert_classifier.tflite */ = {isa = PBXFileReference; lastKnownFileType = file; path = bert_classifier.tflite; sourceTree = "<group>"; };
@@ -83,6 +91,8 @@
 				7F2AAA5422FAB86900C66F75 /* Main.storyboard */,
 				7F2AAA5722FAB86C00C66F75 /* Assets.xcassets */,
 				7F2AAA5922FAB86C00C66F75 /* LaunchScreen.storyboard */,
+				BF4F3D552BE4D7EC0040E750 /* average_vocab.txt */,
+				BF4F3D572BE4D7F30040E750 /* bert_vocab.txt */,
 				7F2AAA5C22FAB86C00C66F75 /* Info.plist */,
 			);
 			path = TextClassification;
@@ -91,7 +101,9 @@
 		BF5E08EA2BDB4A3B000F9F36 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				BF4F3D4F2BE4A6BB0040E750 /* WordpieceTokenizer.swift */,
 				BF5E08EB2BDB4A55000F9F36 /* TextClassificationService.swift */,
+				BF4F3D532BE4C2C40040E750 /* FileLoader.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -117,7 +129,6 @@
 				7F2AAA4922FAB86900C66F75 /* Sources */,
 				7F2AAA4A22FAB86900C66F75 /* Frameworks */,
 				7F2AAA4B22FAB86900C66F75 /* Resources */,
-				ACA70D4179FEEDAAF7830155 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -170,6 +181,8 @@
 				7F2AAA5822FAB86C00C66F75 /* Assets.xcassets in Resources */,
 				BF5E08F02BDB553B000F9F36 /* bert_classifier.tflite in Resources */,
 				BF5E08EF2BDB553B000F9F36 /* average_word_classifier.tflite in Resources */,
+				BF4F3D562BE4D7EC0040E750 /* average_vocab.txt in Resources */,
+				BF4F3D582BE4D7F30040E750 /* bert_vocab.txt in Resources */,
 				7F2AAA5622FAB86900C66F75 /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -199,23 +212,6 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		ACA70D4179FEEDAAF7830155 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-TextClassification/Pods-TextClassification-frameworks-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-TextClassification/Pods-TextClassification-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-TextClassification/Pods-TextClassification-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
 		BF5E08F12BDB63DC000F9F36 /* Download models */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -241,9 +237,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BF4F3D502BE4A6BB0040E750 /* WordpieceTokenizer.swift in Sources */,
 				7F2AAA5322FAB86900C66F75 /* ViewController.swift in Sources */,
 				7F2AAA5122FAB86900C66F75 /* AppDelegate.swift in Sources */,
 				BF5E08EC2BDB4A55000F9F36 /* TextClassificationService.swift in Sources */,
+				BF4F3D542BE4C2C40040E750 /* FileLoader.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
