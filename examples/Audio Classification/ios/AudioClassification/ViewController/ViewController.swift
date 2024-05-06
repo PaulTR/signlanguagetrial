@@ -165,7 +165,10 @@ extension ViewController: AudioInputManagerDelegate {
       return
     }
     self.runModel(inputBuffer: Array(channelDataWithBuffer[(channelDataWithBuffer.count - sampleRate)..<channelDataWithBuffer.count]))
-    channelDataWithBuffer = channelData
+    print(channelDataWithBuffer.count)
+    if channelDataWithBuffer.count > channelDataWithBuffer.count - sampleRate {
+      channelDataWithBuffer.removeFirst(channelDataWithBuffer.count - sampleRate)
+    }
   }
 }
 
