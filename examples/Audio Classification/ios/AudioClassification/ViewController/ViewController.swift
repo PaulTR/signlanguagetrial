@@ -32,6 +32,7 @@ class ViewController: UIViewController {
   private var result: Result?
   private var audioInputManager: AudioInputManager!
   private var bufferSize: Int = 0
+  private var channelDataWithBuffer: [Int16] = []
 
   override func viewDidLoad() {
     super.viewDidLoad()
@@ -45,7 +46,7 @@ class ViewController: UIViewController {
   /// Initializes the AudioInputManager and starts recognizing on the output buffers.
   private func startAudioRecognition() {
     audioInputManager?.stop()
-    audioInputManager = AudioInputManager(sampleRate: audioClassificationHelper.sampleRate)
+    audioInputManager = AudioInputManager(sampleRate: audioClassificationHelper.sampleRate, ovelap: overLap)
     audioInputManager.delegate = self
 
     bufferSize = audioInputManager.bufferSize
@@ -60,6 +61,7 @@ class ViewController: UIViewController {
   /// Start a new audio classification routine.
   private func restartClassifier() {
 
+    channelDataWithBuffer = []
     // Create a new classifier instance.
     audioClassificationHelper = AudioClassificationHelper(
       model: model,
@@ -156,10 +158,14 @@ extension ViewController: AudioInputManagerDelegate {
     _ audioInputManager: AudioInputManager,
     didCaptureChannelData channelData: [Int16]
   ) {
+    channelDataWithBuffer.append(contentsOf: channelData)
     let sampleRate = audioClassificationHelper.sampleRate
-    if channelData.count < bufferSize { return }
-    self.runModel(inputBuffer: Array(channelData[0..<sampleRate]))
-    self.runModel(inputBuffer: Array(channelData[sampleRate..<bufferSize]))
+    if channelDataWithBuffer.count < sampleRate {
+      print("audio data are not enough")
+      return
+    }
+    self.runModel(inputBuffer: Array(channelDataWithBuffer[(channelDataWithBuffer.count - sampleRate)..<channelDataWithBuffer.count]))
+    channelDataWithBuffer = channelData
   }
 }
 

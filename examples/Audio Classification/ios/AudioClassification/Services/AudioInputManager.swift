@@ -34,9 +34,9 @@ public class AudioInputManager {
 
   // MARK: - Methods
 
-  public init(sampleRate: Int) {
+  public init(sampleRate: Int, ovelap: Double) {
     self.sampleRate = sampleRate
-    self.bufferSize = sampleRate * 2
+    self.bufferSize = Int(Double(sampleRate) * (1.0 - ovelap))
   }
 
   public func checkPermissionsAndStartTappingMicrophone() {
