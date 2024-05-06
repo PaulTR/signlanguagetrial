@@ -14,7 +14,6 @@
 
 import UIKit
 import AVFoundation
-import TensorFlowLiteTaskAudio
 
 class ViewController: UIViewController {
 
@@ -22,7 +21,7 @@ class ViewController: UIViewController {
   @IBOutlet weak var tableView: UITableView!
   @IBOutlet weak var inferenceView: InferenceView!
 
-  private var audioClassificationHelper: AudioClassificationHelper?
+  private var audioClassificationHelper: AudioClassificationHelper!
 
   private var model: Model = DefaultConstants.model
   private var overLap: Double = DefaultConstants.overLap
@@ -30,45 +29,36 @@ class ViewController: UIViewController {
   private var threshold: Float = DefaultConstants.threshold
   private var threadCount: Int = DefaultConstants.threadCount
 
-  private var datas: [ClassificationCategory] = []
+  private var result: Result?
+  private var audioInputManager: AudioInputManager!
+  private var bufferSize: Int = 0
 
   override func viewDidLoad() {
     super.viewDidLoad()
     inferenceView.delegate = self
     inferenceView.setDefault()
-    startAudioClassification()
+    restartClassifier()
   }
 
   // MARK: - Private Methods
-  /// Request permission and start audio classification if granted.
-  private func startAudioClassification() {
-    AVAudioSession.sharedInstance().requestRecordPermission { granted in
-      if granted {
-        DispatchQueue.main.async {
-          self.restartClassifier()
-        }
-      } else {
-        self.checkPermissions()
-      }
-    }
+
+  /// Initializes the AudioInputManager and starts recognizing on the output buffers.
+  private func startAudioRecognition() {
+    audioInputManager?.stop()
+    audioInputManager = AudioInputManager(sampleRate: audioClassificationHelper.sampleRate)
+    audioInputManager.delegate = self
+
+    bufferSize = audioInputManager.bufferSize
+
+    audioInputManager.checkPermissionsAndStartTappingMicrophone()
   }
 
-  /// Check permission and show error if user denied permission.
-  private func checkPermissions() {
-    switch AVAudioSession.sharedInstance().recordPermission {
-    case .granted, .undetermined:
-      startAudioClassification()
-    case .denied:
-      showPermissionsErrorAlert()
-    @unknown default:
-      fatalError()
-    }
+  private func runModel(inputBuffer: [Int16]) {
+    audioClassificationHelper.start(inputBuffer: inputBuffer)
   }
 
   /// Start a new audio classification routine.
   private func restartClassifier() {
-    // Stop the existing classifier if one is running.
-    audioClassificationHelper?.stopClassifier()
 
     // Create a new classifier instance.
     audioClassificationHelper = AudioClassificationHelper(
@@ -78,8 +68,8 @@ class ViewController: UIViewController {
       maxResults: maxResults)
 
     // Start the new classification routine.
-    audioClassificationHelper?.delegate = self
-    audioClassificationHelper?.startClassifier(overlap: overLap)
+    audioClassificationHelper.delegate = self
+    startAudioRecognition()
   }
 }
 
@@ -112,19 +102,21 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate {
 
   func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
     guard let cell = tableView.dequeueReusableCell(withIdentifier: "ResultCell") as? ResultTableViewCell else { fatalError() }
-    cell.setData(datas[indexPath.row])
+    guard let result = result else { return cell }
+    cell.setData(result.categories[indexPath.row])
     return cell
   }
 
   func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-    return datas.count
+    guard let result = result else { return 0 }
+    return result.categories.count
   }
 }
 
 // MARK: AudioClassificationHelperDelegate
 extension ViewController: AudioClassificationHelperDelegate {
   func onResultReceived(_ result: Result) {
-    datas = result.categories
+    self.result = result
     tableView.reloadData()
     inferenceView.inferenceTimeLabel.text = "\(Int(result.inferenceTime * 1000)) ms"
   }
@@ -134,6 +126,40 @@ extension ViewController: AudioClassificationHelperDelegate {
     let alert = UIAlertController(title: "Error", message: errorMessage, preferredStyle: UIAlertController.Style.alert)
     alert.addAction(UIAlertAction(title: "OK", style: UIAlertAction.Style.default, handler: nil))
     self.present(alert, animated: true, completion: nil)
+  }
+}
+
+// MARK: AudioInputManagerDelegate
+extension ViewController: AudioInputManagerDelegate {
+  func audioInputManagerDidFailToAchievePermission(_ audioInputManager: AudioInputManager) {
+    let alertController = UIAlertController(
+      title: "Microphone Permissions Denied",
+      message: "Microphone permissions have been denied for this app. You can change this by going to Settings",
+      preferredStyle: .alert
+    )
+
+    let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+    let settingsAction = UIAlertAction(title: "Settings", style: .default) { _ in
+      UIApplication.shared.open(
+        URL(string: UIApplication.openSettingsURLString)!,
+        options: [:],
+        completionHandler: nil
+      )
+    }
+    alertController.addAction(cancelAction)
+    alertController.addAction(settingsAction)
+
+    present(alertController, animated: true, completion: nil)
+  }
+
+  func audioInputManager(
+    _ audioInputManager: AudioInputManager,
+    didCaptureChannelData channelData: [Int16]
+  ) {
+    let sampleRate = audioClassificationHelper.sampleRate
+    if channelData.count < bufferSize { return }
+    self.runModel(inputBuffer: Array(channelData[0..<sampleRate]))
+    self.runModel(inputBuffer: Array(channelData[sampleRate..<bufferSize]))
   }
 }
 

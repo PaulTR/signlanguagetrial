@@ -28,6 +28,17 @@ enum Model: String, CaseIterable {
               forResource: "speech_commands", ofType: "tflite")
       }
   }
+
+  var labelPath: String? {
+      switch self {
+      case .Yamnet:
+          return Bundle.main.path(
+              forResource: "yamnet_labels", ofType: "txt")
+      case .speechCommand:
+          return Bundle.main.path(
+              forResource: "speech_commands_labels", ofType: "txt")
+      }
+  }
 }
 
 

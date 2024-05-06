@@ -1,4 +1,4 @@
-// Copyright 2022 The TensorFlow Authors. All Rights Reserved.
+// Copyright 2024 The TensorFlow Authors. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import TensorFlowLiteTaskAudio
+import TensorFlowLite
 
 /// Delegate to returns the classification results.
 protocol AudioClassificationHelperDelegate {
@@ -23,9 +23,14 @@ protocol AudioClassificationHelperDelegate {
 fileprivate let errorDomain = "org.tensorflow.lite.examples"
 
 /// Stores results for a particular audio snipprt that was successfully classified.
+
+struct Category {
+  let label: String
+  let probability: Float32
+}
 struct Result {
   let inferenceTime: Double
-  let categories: [ClassificationCategory]
+  let categories: [Category]
 }
 
 /// Information about a model file.
@@ -39,15 +44,18 @@ class AudioClassificationHelper {
   var delegate: AudioClassificationHelperDelegate?
 
   // MARK: Private properties
-  /// An `AudioClassifier` object for performing audio classification using a given model.
-  private var classifier: AudioClassifier
-  
-  /// An object to continously record audio using the device's microphone.
-  private var audioRecord: AudioRecord
-  
-  /// A tensor to store the input audio for the model.
-  private var inputAudioTensor: AudioTensor
-  
+  /// Sample rate for input sound buffer. Caution: generally this value is a bit less than 1 second's audio sample.
+  private(set) var sampleRate = 0
+  /// Lable names described in the lable file
+  private(set) var labelNames: [String] = []
+  private var interpreter: Interpreter!
+
+  private var model: Model
+  private var threadCount: Int
+  private var maxResults: Int
+  private var scoreThreshold: Float
+  private let audioBufferInputTensorIndex: Int = 0
+
   /// A timer to schedule classification routine to run periodically.
   private var timer: Timer?
   
@@ -58,102 +66,93 @@ class AudioClassificationHelper {
 
   /// A failable initializer for `AudioClassificationHelper`. A new instance is created if the model
   /// is successfully loaded from the app's main bundle.
-  init?(model: Model, threadCount: Int, scoreThreshold: Float, maxResults: Int) {
+  init(model: Model, threadCount: Int, scoreThreshold: Float, maxResults: Int) {
 
-    // Construct the path to the model file.
+    self.threadCount = threadCount
+    self.maxResults = maxResults
+    self.scoreThreshold = scoreThreshold
+    self.model = model
+
+    setupInterpreter()
+  }
+
+  private func setupInterpreter() {
     guard let modelPath = model.modelPath else {
-      print("Failed to load the model file \(model.rawValue)")
-      return nil
+      fatalError("can not load model path")
     }
-
-    // Specify the options for the classifier.
-    let classifierOptions = AudioClassifierOptions(modelPath: modelPath)
-    classifierOptions.baseOptions.computeSettings.cpuSettings.numThreads = threadCount
-    classifierOptions.classificationOptions.maxResults = maxResults
-    classifierOptions.classificationOptions.scoreThreshold = scoreThreshold
-    
     do {
-      // Create the classifier.
-      classifier = try AudioClassifier.classifier(options: classifierOptions)
-      
-      // Create an `AudioRecord` instance to record input audio that satisfies
-      // the model's requirements.
-      audioRecord = try classifier.createAudioRecord()
-      inputAudioTensor = classifier.createInputAudioTensor()
-    } catch let error {
-      print("Failed to create the classifier with error: \(error.localizedDescription)")
-      return nil
-    }
-  }
+      var options = Interpreter.Options()
+      options.threadCount = threadCount
+      interpreter = try Interpreter(modelPath: modelPath, options: options)
 
-  func stopClassifier() {
-    audioRecord.stop()
-    timer?.invalidate()
-    timer = nil
-  }
+      try interpreter.allocateTensors()
+      let inputShape = try interpreter.input(at: 0).shape
+      switch model {
+      case .Yamnet:
+        sampleRate = inputShape.dimensions[0]
+      case .speechCommand:
+        sampleRate = inputShape.dimensions[1]
+      }
+      try interpreter.invoke()
 
-  /// Start the audio classification routine in the background.
-  ///
-  /// Classification results are periodically returned to the delegate.
-  /// - Parameters:
-  ///   - overlap: Overlapping factor between consecutive audio snippet to be classified.
-  ///   Value must be >= 0 and < 1.
-  func startClassifier(overlap: Double) {
-    if (overlap < 0) {
-      let error = NSError(
-        domain: errorDomain,
-        code: 0,
-        userInfo: [NSLocalizedDescriptionKey: "overlap must be equal or larger than 0."])
-      delegate?.onError(error)
-    }
-    
-    if (overlap >= 1) {
-      let error = NSError(domain: errorDomain, code: 0, userInfo: [NSLocalizedDescriptionKey: "overlap must be smaller than 1."])
-      delegate?.onError(error)
-    }
-    
-    do {
-      // Start recording audio.
-      try audioRecord.startRecording()
-      
-      // Calculate interval between sampling based on overlap.
-      let audioFormat = inputAudioTensor.audioFormat
-      let lengthInMilliSeconds = Double(inputAudioTensor.bufferSize) / Double(audioFormat.sampleRate)
-      let interval = lengthInMilliSeconds * Double(1 - overlap)
-      timer?.invalidate()
-      
-      // Schedule the classification routine to run every fixed interval.
-      timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true, block: {
-        [weak self] _ in
-        self?.processQueue.async {
-          self?.runClassification()
-        }
-      })
+      labelNames = loadLabels()
     } catch {
-      self.delegate?.onError(error)
+      fatalError("Failed to create the interpreter with error: \(error.localizedDescription)")
     }
   }
-  
-  /// Run the classification routine with the latest audio stored in the `AudioRecord` instance 's buffer.
-  private func runClassification() {
+
+  private func loadLabels() -> [String] {
+    guard let labelPath = model.labelPath else { return [] }
+
+    var content = ""
+    do {
+      content = try String(contentsOfFile: labelPath, encoding: .utf8)
+      let labels = content.components(separatedBy: "\n")
+        .filter { !$0.isEmpty }
+      return labels
+    } catch {
+      print("Failed to load label content: '\(content)' with error: \(error.localizedDescription)")
+      return []
+    }
+  }
+
+  /// Invokes the `Interpreter` and processes and returns the inference results.
+  func start(inputBuffer: [Int16]) {
+    let outputTensor: Tensor
     let startTime = Date().timeIntervalSince1970
     do {
-      // Grab the latest audio chunk in the audio record and run classification.
-      try inputAudioTensor.load(audioRecord: audioRecord)
-      let results = try classifier.classify(audioTensor: inputAudioTensor)
-      let inferenceTime = Date().timeIntervalSince1970 - startTime
-      
-      // Return the classification result to the delegate.
-      DispatchQueue.main.async {
-        // Send classification result to the delegate.
-        self.delegate?.onResultReceived(
-          Result(inferenceTime: inferenceTime,
-                 categories: results.classifications[0].categories)
-        )
-      }
-    } catch {
-      self.delegate?.onError(error)
+      let audioBufferData = int16ArrayToData(inputBuffer)
+      try interpreter.copy(audioBufferData, toInputAt: audioBufferInputTensorIndex)
+      try interpreter.invoke()
+      outputTensor = try interpreter.output(at: 0)
+    } catch let error {
+      print(">>> Failed to invoke the interpreter with error: \(error.localizedDescription)")
+      return
     }
+    let inferenceTime = Date().timeIntervalSince1970 - startTime
+    // Gets the formatted and averaged results.
+    let probabilities = dataToFloatArray(outputTensor.data) ?? []
+    let categories: [Category] = Array(probabilities.enumerated().map { (index, probability) in
+      return Category(label: labelNames[index], probability: probability)
+    }.filter({ $0.probability >= scoreThreshold })
+      .sorted(by: {$0.probability > $1.probability}).prefix(maxResults))
+    DispatchQueue.main.async {
+      self.delegate?.onResultReceived(Result(inferenceTime: inferenceTime, categories: categories))
+    }
+  }
+
+  /// Creates a new buffer by copying the buffer pointer of the given `Int16` array.
+  private func int16ArrayToData(_ buffer: [Int16]) -> Data {
+    let floatData = buffer.map { Float($0) / Float(Int16.max) }
+    return floatData.withUnsafeBufferPointer(Data.init)
+  }
+
+  /// Creates a new array from the bytes of the given unsafe data.
+  /// - Returns: `nil` if `unsafeData.count` is not a multiple of `MemoryLayout<Float>.stride`.
+  private func dataToFloatArray(_ data: Data) -> [Float]? {
+    guard data.count % MemoryLayout<Float>.stride == 0 else { return nil }
+
+    return data.withUnsafeBytes { .init($0.bindMemory(to: Float.self)) }
   }
 }
 

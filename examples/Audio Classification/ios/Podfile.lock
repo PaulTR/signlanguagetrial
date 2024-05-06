@@ -1,16 +1,24 @@
 PODS:
-  - TensorFlowLiteTaskAudio (0.4.3)
+  - TensorFlowLiteC (2.14.0):
+    - TensorFlowLiteC/Core (= 2.14.0)
+  - TensorFlowLiteC/Core (2.14.0)
+  - TensorFlowLiteSwift (2.14.0):
+    - TensorFlowLiteSwift/Core (= 2.14.0)
+  - TensorFlowLiteSwift/Core (2.14.0):
+    - TensorFlowLiteC (= 2.14.0)
 
 DEPENDENCIES:
-  - TensorFlowLiteTaskAudio
+  - TensorFlowLiteSwift
 
 SPEC REPOS:
   trunk:
-    - TensorFlowLiteTaskAudio
+    - TensorFlowLiteC
+    - TensorFlowLiteSwift
 
 SPEC CHECKSUMS:
-  TensorFlowLiteTaskAudio: c712928d24d194fc6a461d7894aff29392eb0872
+  TensorFlowLiteC: a836de9b6e6018665ccc349538bdd2c3b80dd7a5
+  TensorFlowLiteSwift: f706b143b69d7bf433aba7b08049bdd11c321a10
 
-PODFILE CHECKSUM: 2ecd6662f8a823de238d8b4c64732929ab380398
+PODFILE CHECKSUM: dd4dcea49ac0f004b6f47eaadfadfba21c81fd18
 
 COCOAPODS: 1.14.3

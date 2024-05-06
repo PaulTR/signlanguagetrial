@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		BF4F3D5A2BE870940040E750 /* AudioInputManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF4F3D592BE870940040E750 /* AudioInputManager.swift */; };
+		BF4F3D5D2BE87DD20040E750 /* yamnet_labels.txt in Resources */ = {isa = PBXBuildFile; fileRef = BF4F3D5B2BE87DD20040E750 /* yamnet_labels.txt */; };
+		BF4F3D5E2BE87DD20040E750 /* speech_commands_labels.txt in Resources */ = {isa = PBXBuildFile; fileRef = BF4F3D5C2BE87DD20040E750 /* speech_commands_labels.txt */; };
 		BF5A2AF42BC3CDFF00A0ABAC /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF5A2AF32BC3CDFF00A0ABAC /* AppDelegate.swift */; };
 		BF5A2AF62BC3CDFF00A0ABAC /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF5A2AF52BC3CDFF00A0ABAC /* SceneDelegate.swift */; };
 		BF5A2AF82BC3CDFF00A0ABAC /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF5A2AF72BC3CDFF00A0ABAC /* ViewController.swift */; };
@@ -25,6 +28,9 @@
 /* Begin PBXFileReference section */
 		34A644086D6C15F45413AF1A /* Pods-AudioClassificationTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-AudioClassificationTests.release.xcconfig"; path = "Target Support Files/Pods-AudioClassificationTests/Pods-AudioClassificationTests.release.xcconfig"; sourceTree = "<group>"; };
 		8F88D6D664DF1AD9DFE5633B /* Pods-AudioClassificationTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-AudioClassificationTests.debug.xcconfig"; path = "Target Support Files/Pods-AudioClassificationTests/Pods-AudioClassificationTests.debug.xcconfig"; sourceTree = "<group>"; };
+		BF4F3D592BE870940040E750 /* AudioInputManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AudioInputManager.swift; sourceTree = "<group>"; };
+		BF4F3D5B2BE87DD20040E750 /* yamnet_labels.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = yamnet_labels.txt; sourceTree = "<group>"; };
+		BF4F3D5C2BE87DD20040E750 /* speech_commands_labels.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = speech_commands_labels.txt; sourceTree = "<group>"; };
 		BF5A2AF02BC3CDFF00A0ABAC /* AudioClassification.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AudioClassification.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BF5A2AF32BC3CDFF00A0ABAC /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		BF5A2AF52BC3CDFF00A0ABAC /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -106,8 +112,11 @@
 		BF5A2B262BC3CFD800A0ABAC /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				BF4F3D592BE870940040E750 /* AudioInputManager.swift */,
 				BFB819562BD755B200C71A36 /* speech_commands.tflite */,
 				BFB819552BD755B200C71A36 /* yamnet.tflite */,
+				BF4F3D5C2BE87DD20040E750 /* speech_commands_labels.txt */,
+				BF4F3D5B2BE87DD20040E750 /* yamnet_labels.txt */,
 				BF5A2B232BC3CFD800A0ABAC /* AudioClassificationHelper.swift */,
 			);
 			path = Services;
@@ -210,6 +219,8 @@
 				BF5A2AFD2BC3CE0200A0ABAC /* Assets.xcassets in Resources */,
 				BFB819582BD755B200C71A36 /* speech_commands.tflite in Resources */,
 				BFB819572BD755B200C71A36 /* yamnet.tflite in Resources */,
+				BF4F3D5E2BE87DD20040E750 /* speech_commands_labels.txt in Resources */,
+				BF4F3D5D2BE87DD20040E750 /* yamnet_labels.txt in Resources */,
 				BF5A2B002BC3CE0200A0ABAC /* Base in Resources */,
 				BF5A2AFB2BC3CDFF00A0ABAC /* Base in Resources */,
 			);
@@ -273,6 +284,7 @@
 				BF5A2B2D2BC3D20F00A0ABAC /* ResultTableViewCell.swift in Sources */,
 				BF5A2B322BC3D40C00A0ABAC /* DefaultConstants.swift in Sources */,
 				BF5A2AF62BC3CDFF00A0ABAC /* SceneDelegate.swift in Sources */,
+				BF4F3D5A2BE870940040E750 /* AudioInputManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -440,7 +452,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.google.mediapipe.examples.imageembedder.AudioClassification;
+				PRODUCT_BUNDLE_IDENTIFIER = com.google.tflite.examples.imageembedder.AudioClassification;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -472,7 +484,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.google.mediapipe.examples.imageembedder.AudioClassification;
+				PRODUCT_BUNDLE_IDENTIFIER = com.google.tflite.examples.imageembedder.AudioClassification;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
