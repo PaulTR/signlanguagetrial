@@ -213,17 +213,19 @@ extension MediaLibraryViewController: UIImagePickerControllerDelegate, UINavigat
           return
         }
         
-        let resultBundle = await self.imageClassifierService?.classify(
+        guard let results = await self.imageClassifierService?.classify(
           videoAsset: asset,
           durationInMilliseconds: videoDuration * Constants.milliSeconds,
-          inferenceIntervalInMilliseconds: Constants.inferenceTimeIntervalInMilliseconds)
-        
+          inferenceIntervalInMilliseconds: Constants.inferenceTimeIntervalInMilliseconds) else {
+          hideProgressView()
+          return
+        }
+
         hideProgressView()
-        
         playVideo(
           mediaURL: mediaURL,
           videoDuration: videoDuration,
-          resultBundle: resultBundle)
+          results: results)
       }
         
       imageEmptyLabel.isHidden = true
@@ -240,8 +242,8 @@ extension MediaLibraryViewController: UIImagePickerControllerDelegate, UINavigat
       clearAndInitializeImageClassifierService()
       
       DispatchQueue.global(qos: .userInteractive).async { [weak self] in
-        guard let weakSelf = self,
-              let imageClassifierResult = weakSelf
+        guard let self = self,
+              let result = self
                 .imageClassifierService?
                 .classify(image: image) else {
           DispatchQueue.main.async {
@@ -251,8 +253,8 @@ extension MediaLibraryViewController: UIImagePickerControllerDelegate, UINavigat
         }
           
         DispatchQueue.main.async {
-          weakSelf.hideProgressView()
-          weakSelf.inferenceResultDeliveryDelegate?.didPerformInference(result: imageClassifierResult)
+          self.hideProgressView()
+          self.inferenceResultDeliveryDelegate?.didPerformInference(result: result)
         }
       }
     default:
@@ -268,7 +270,7 @@ extension MediaLibraryViewController: UIImagePickerControllerDelegate, UINavigat
         )
   }
   
-  private func playVideo(mediaURL: URL, videoDuration: Double, resultBundle: ResultBundle?) {
+  private func playVideo(mediaURL: URL, videoDuration: Double, results: [Result?]) {
     playVideo(asset: AVAsset(url: mediaURL))
     playerTimeObserverToken = playerViewController?.player?.addPeriodicTimeObserver(
       forInterval: CMTime(value: Int64(Constants.inferenceTimeIntervalInMilliseconds),
@@ -278,12 +280,8 @@ extension MediaLibraryViewController: UIImagePickerControllerDelegate, UINavigat
         DispatchQueue.main.async {
           let index =
             Int(CMTimeGetSeconds(time) * Constants.milliSeconds / Constants.inferenceTimeIntervalInMilliseconds)
-          guard
-                let weakSelf = self,
-                let resultBundle = resultBundle else {
-            return
-          }
-          self?.inferenceResultDeliveryDelegate?.didPerformInference(result: resultBundle, index: index)
+          guard let self = self else { return }
+          self.inferenceResultDeliveryDelegate?.didPerformInference(results: results, index: index)
 
 
           
@@ -291,7 +289,7 @@ extension MediaLibraryViewController: UIImagePickerControllerDelegate, UINavigat
           if (floor(CMTimeGetSeconds(time) +
                     Constants.inferenceTimeIntervalInMilliseconds / Constants.milliSeconds)
               >= floor(videoDuration)) {
-            weakSelf.interfaceUpdatesDelegate?.shouldClicksBeEnabled(true)
+            self.interfaceUpdatesDelegate?.shouldClicksBeEnabled(true)
           }
         }
     })

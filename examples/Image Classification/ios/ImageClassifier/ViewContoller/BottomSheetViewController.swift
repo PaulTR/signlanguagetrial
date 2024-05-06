@@ -14,7 +14,6 @@
 // =============================================================================
 
 import UIKit
-import TensorFlowLiteTaskVision
 
 protocol BottomSheetViewControllerDelegate: AnyObject {
   /**
@@ -51,7 +50,7 @@ class BottomSheetViewController: UIViewController {
 
   // MARK: Constants
   private let normalCellHeight: CGFloat = 27.0
-  private var imageClassifierResult: ClassificationResult?
+  private var imageClassifierResult: Result?
 
   // MARK: Computed properties
   var collapsedHeight: CGFloat {
@@ -70,8 +69,12 @@ class BottomSheetViewController: UIViewController {
   }
   
   // MARK: - Public Functions
-  func update(inferenceTimeString: String, result: ClassificationResult?) {
-    inferenceTimeLabel.text = inferenceTimeString
+  func update(result: Result?) {
+    if let inferenceTime = result?.inferenceTime {
+      inferenceTimeLabel.text = String(format: "%.2fms", inferenceTime)
+    } else {
+      inferenceTimeLabel.text = ""
+    }
     imageClassifierResult = result
     tableView.reloadData()
   }
@@ -141,16 +144,15 @@ extension BottomSheetViewController: UITableViewDataSource {
 
   func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
     let cell = tableView.dequeueReusableCell(withIdentifier: "INFO_CELL") as! InfoCell
-    guard let imageClassifierResult = imageClassifierResult,
-          let classification = imageClassifierResult.classifications.first else {
+    guard let imageClassifierResult = imageClassifierResult else {
       cell.fieldNameLabel.text = "--"
       cell.infoLabel.text = "--"
       return cell
     }
-    if indexPath.row < classification.categories.count {
-      let category = classification.categories[indexPath.row]
-      cell.fieldNameLabel.text = category.label
-      cell.infoLabel.text = String(format: "%.2f", category.score)
+    if indexPath.row < imageClassifierResult.inferences.count {
+      let inference = imageClassifierResult.inferences[indexPath.row]
+      cell.fieldNameLabel.text = inference.label
+      cell.infoLabel.text = String(format: "%.2f", inference.confidence)
     } else {
       cell.fieldNameLabel.text = "--"
       cell.infoLabel.text = "--"
