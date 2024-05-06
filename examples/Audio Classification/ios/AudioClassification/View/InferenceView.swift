@@ -96,7 +96,7 @@ class InferenceView: UIView {
 
   @IBAction func showHidenButtonTouchUpInside(_ sender: UIButton) {
     sender.isSelected.toggle()
-    showHidenButtonLayoutConstraint.constant = sender.isSelected ? 300 : 40
+    showHidenButtonLayoutConstraint.constant = sender.isSelected ? 296 : 74
     UIView.animate(withDuration: 0.3, animations: {
       self.superview?.layoutIfNeeded()
     }, completion: nil)
