@@ -17,6 +17,8 @@
 		BF2B2CE42A316CB100589A11 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BF2B2CE32A316CB100589A11 /* Assets.xcassets */; };
 		BF2B2CE72A316CB100589A11 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BF2B2CE52A316CB100589A11 /* LaunchScreen.storyboard */; };
 		BF2B2CF22A316CB200589A11 /* ImageClassifierTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF2B2CF12A316CB200589A11 /* ImageClassifierTests.swift */; };
+		BF4F3D612BE88D300040E750 /* CVPixelBufferExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF4F3D602BE88D300040E750 /* CVPixelBufferExtension.swift */; };
+		BF4F3D632BE892A20040E750 /* labels.txt in Resources */ = {isa = PBXBuildFile; fileRef = BF4F3D622BE892A20040E750 /* labels.txt */; };
 		BFCDAE0C2AA03BC300EC4371 /* DefaultConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFCDADFC2AA03BC300EC4371 /* DefaultConstants.swift */; };
 		BFCDAE0D2AA03BC300EC4371 /* InferenceConfigManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFCDADFD2AA03BC300EC4371 /* InferenceConfigManager.swift */; };
 		BFCDAE0F2AA03BC300EC4371 /* CameraFeedService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFCDAE012AA03BC300EC4371 /* CameraFeedService.swift */; };
@@ -55,6 +57,8 @@
 		BF2B2CED2A316CB200589A11 /* ImageClassifierTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ImageClassifierTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		BF2B2CF12A316CB200589A11 /* ImageClassifierTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageClassifierTests.swift; sourceTree = "<group>"; };
 		BF2B2D1A2A3BFC1100589A11 /* cup.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = cup.png; sourceTree = "<group>"; };
+		BF4F3D602BE88D300040E750 /* CVPixelBufferExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CVPixelBufferExtension.swift; sourceTree = "<group>"; };
+		BF4F3D622BE892A20040E750 /* labels.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = labels.txt; sourceTree = "<group>"; };
 		BFCDADFC2AA03BC300EC4371 /* DefaultConstants.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DefaultConstants.swift; sourceTree = "<group>"; };
 		BFCDADFD2AA03BC300EC4371 /* InferenceConfigManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InferenceConfigManager.swift; sourceTree = "<group>"; };
 		BFCDAE012AA03BC300EC4371 /* CameraFeedService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CameraFeedService.swift; sourceTree = "<group>"; };
@@ -121,6 +125,7 @@
 		BF2B2CD92A316CB000589A11 /* ImageClassifier */ = {
 			isa = PBXGroup;
 			children = (
+				BF4F3D5F2BE88D210040E750 /* Extensions */,
 				BFCDADFB2AA03BC300EC4371 /* Configs */,
 				BFCDAE002AA03BC300EC4371 /* Services */,
 				BFCDAE052AA03BC300EC4371 /* ViewContoller */,
@@ -131,6 +136,7 @@
 				BF2B2CE52A316CB100589A11 /* LaunchScreen.storyboard */,
 				BFE921BC2BCE25AF00372D5F /* efficientnet_lite0.tflite */,
 				BFE921BD2BCE25AF00372D5F /* efficientnet_lite2.tflite */,
+				BF4F3D622BE892A20040E750 /* labels.txt */,
 				BF2B2CE82A316CB100589A11 /* Info.plist */,
 			);
 			path = ImageClassifier;
@@ -143,6 +149,14 @@
 				BF2B2D1A2A3BFC1100589A11 /* cup.png */,
 			);
 			path = ImageClassifierTests;
+			sourceTree = "<group>";
+		};
+		BF4F3D5F2BE88D210040E750 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				BF4F3D602BE88D300040E750 /* CVPixelBufferExtension.swift */,
+			);
+			path = Extensions;
 			sourceTree = "<group>";
 		};
 		BFCDADFB2AA03BC300EC4371 /* Configs */ = {
@@ -279,6 +293,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				BFE921BE2BCE25AF00372D5F /* efficientnet_lite0.tflite in Resources */,
+				BF4F3D632BE892A20040E750 /* labels.txt in Resources */,
 				BFE921BF2BCE25AF00372D5F /* efficientnet_lite2.tflite in Resources */,
 				BF2B2CE72A316CB100589A11 /* LaunchScreen.storyboard in Resources */,
 				BF2B2CE42A316CB100589A11 /* Assets.xcassets in Resources */,
@@ -372,6 +387,7 @@
 				BFCDAE132AA03BC300EC4371 /* MediaLibraryViewController.swift in Sources */,
 				BFCDAE0C2AA03BC300EC4371 /* DefaultConstants.swift in Sources */,
 				BFCDAE102AA03BC300EC4371 /* ImageClassifierService.swift in Sources */,
+				BF4F3D612BE88D300040E750 /* CVPixelBufferExtension.swift in Sources */,
 				BFCDAE0F2AA03BC300EC4371 /* CameraFeedService.swift in Sources */,
 				BFCDAE142AA03BC300EC4371 /* RootViewController.swift in Sources */,
 				BF2B2CDD2A316CB000589A11 /* SceneDelegate.swift in Sources */,
@@ -542,7 +558,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = H83UK2M7VU;
+				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ImageClassifier/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "This app uses camera to classify the objects that appear in the camera feed.";
@@ -576,7 +592,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = H83UK2M7VU;
+				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ImageClassifier/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "This app uses camera to classify the objects that appear in the camera feed.";

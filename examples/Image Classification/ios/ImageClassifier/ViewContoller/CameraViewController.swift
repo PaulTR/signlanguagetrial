@@ -35,6 +35,7 @@ class CameraViewController: UIViewController {
   private var isSessionRunning = false
   private var isObserving = false
   private let backgroundQueue = DispatchQueue(label: "com.google.tflite.CameraViewController.backgroundQueue")
+  private var isClassify = false
 
   // MARK: Controllers that manage functionality
   // Handles all the camera related functionality
@@ -178,14 +179,15 @@ class CameraViewController: UIViewController {
 }
 
 extension CameraViewController: CameraFeedServiceDelegate {
-  
-  func didOutput(sampleBuffer: CMSampleBuffer, orientation: UIImage.Orientation) {
-    // Pass the pixel buffer to service
+  func didOutput(pixelBuffer: CVPixelBuffer, orientation: UIImage.Orientation) {
+    guard !isClassify else { return }
+    isClassify = true
     backgroundQueue.async { [weak self] in
       self?.imageClassifierService?.classify(
-        sampleBuffer: sampleBuffer, completion: { resultBundle in
-          guard let resultBundle = resultBundle else { return }
-          self?.inferenceResultDeliveryDelegate?.didPerformInference(result: resultBundle)
+        pixelBuffer: pixelBuffer, completion: { result in
+          self?.isClassify = false
+          guard let self = self else { return }
+          self.inferenceResultDeliveryDelegate?.didPerformInference(result: result)
         })
     }
   }
@@ -213,16 +215,6 @@ extension CameraViewController: CameraFeedServiceDelegate {
     // manually resumed.
     resumeButton.isHidden = false
     clearImageClassifierServiceOnSessionInterruption()
-  }
-}
-
-// MARK: ImageClassifierServiceLiveStreamDelegate
-extension CameraViewController: ImageClassifierServiceLiveStreamDelegate {
-
-  func imageClassifierService(_ imageClassifierService: ImageClassifierService, didFinishClassification result: ResultBundle?, error: Error?) {
-    DispatchQueue.main.async { [weak self] in
-      self?.inferenceResultDeliveryDelegate?.didPerformInference(result: result)
-    }
   }
 }
 

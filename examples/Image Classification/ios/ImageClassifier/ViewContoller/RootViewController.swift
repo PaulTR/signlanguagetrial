@@ -16,8 +16,8 @@
 import UIKit
 
 protocol InferenceResultDeliveryDelegate: AnyObject {
-  func didPerformInference(result: ResultBundle?)
-  func didPerformInference(result: ResultBundle?, index: Int)
+  func didPerformInference(result: Result?)
+  func didPerformInference(results: [Result?], index: Int)
 }
 
 protocol InterfaceUpdatesDelegate: AnyObject {
@@ -238,28 +238,16 @@ extension RootViewController: UITabBarDelegate {
 
 // MARK: InferenceResultDeliveryDelegate Methods
 extension RootViewController: InferenceResultDeliveryDelegate {
-  func didPerformInference(result: ResultBundle?) {
-    var inferenceTimeString = ""
-    
-    if let inferenceTime = result?.inferenceTime {
-      inferenceTimeString = String(format: "%.2fms", inferenceTime)
-    }
+  func didPerformInference(result: Result?) {
     DispatchQueue.main.async {
-      self.bottomSheetViewController?.update(inferenceTimeString: inferenceTimeString,
-                                      result: result?.imageClassifierResults.first ?? nil)
+      self.bottomSheetViewController?.update(result: result)
     }
   }
 
-  func didPerformInference(result: ResultBundle?, index: Int) {
-    var inferenceTimeString = ""
+  func didPerformInference(results: [Result?], index: Int) {
 
-    if let inferenceTime = result?.inferenceTime {
-      inferenceTimeString = String(format: "%.2fms", inferenceTime)
-    }
-    if let imageClassifierResults = result?.imageClassifierResults,
-       index < imageClassifierResults.count {
-      bottomSheetViewController?.update(inferenceTimeString: inferenceTimeString,
-                                      result: imageClassifierResults[index])
+    if index < results.count {
+      bottomSheetViewController?.update(result: results[index])
     }
   }
 }
