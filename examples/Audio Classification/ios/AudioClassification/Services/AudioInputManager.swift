@@ -83,7 +83,7 @@ public class AudioInputManager {
         // for the model.(pcm 16)
         guard let pcmBuffer = AVAudioPCMBuffer(
           pcmFormat: recordingFormat,
-          frameCapacity: AVAudioFrameCount(recordingFormat.sampleRate * 2.0)
+          frameCapacity: AVAudioFrameCount(self.bufferSize)
         ) else { return }
 
         var error: NSError?
