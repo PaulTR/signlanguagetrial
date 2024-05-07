@@ -47,13 +47,23 @@ half4 mergeColor(half4 pixelData, int categoryIndex) {
 
 kernel void mergeColor(texture2d<half, access::read> inTexture [[ texture (0) ]],
                        texture2d<half, access::read_write> outTexture [[ texture (1) ]],
-                       device uint8_t* data_in [[ buffer(0) ]],
+                       device float* data_in [[ buffer(0) ]],
                        constant int& width [[buffer(1)]],
                        constant int& height [[buffer(2)]],
+                       constant int& deep [[buffer(3)]],
                        uint2 gid [[ thread_position_in_grid ]]) {
   uint2 newPoint = uint2(uint(gid.x * width / inTexture.get_width()),uint(gid.y * height / inTexture.get_height()));
   half4 pixelData = inTexture.read(gid).rgba;
-  uint8_t categoryIndex = data_in[uint(newPoint.y * height  + newPoint.x)];
-  half4 outputPixelData = mergeColor(pixelData, categoryIndex);
+  int index = 0;
+  float max = 0;
+  int startIndex = (newPoint.y * height  + newPoint.x) * deep;
+  for (int i = 0; i < deep; i ++) {
+    int dataIndex = startIndex + i;
+    if (data_in[dataIndex] > max) {
+      max = data_in[dataIndex];
+      index = i;
+    }
+  }
+  half4 outputPixelData = mergeColor(pixelData, index);
   outTexture.write(outputPixelData, gid);
 }

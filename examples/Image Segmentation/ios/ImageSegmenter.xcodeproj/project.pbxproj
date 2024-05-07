@@ -26,6 +26,7 @@
 		BF6EBBA22B20531800CD13FB /* SegmentedImageRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF6EBBA12B20531800CD13FB /* SegmentedImageRenderer.swift */; };
 		BF6EBBA62B2070F000CD13FB /* RenderToMtlViewShaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = BF6EBBA52B2070F000CD13FB /* RenderToMtlViewShaders.metal */; };
 		BF6EBBA82B20712600CD13FB /* selfie_segmenter.tflite in Resources */ = {isa = PBXBuildFile; fileRef = BF6EBBA72B20712600CD13FB /* selfie_segmenter.tflite */; };
+		BF7CB7422BE9C97F00059D55 /* CVPixelBufferExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF7CB7402BE9C97F00059D55 /* CVPixelBufferExtension.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -55,6 +56,7 @@
 		BF6EBBA12B20531800CD13FB /* SegmentedImageRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentedImageRenderer.swift; sourceTree = "<group>"; };
 		BF6EBBA52B2070F000CD13FB /* RenderToMtlViewShaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = RenderToMtlViewShaders.metal; sourceTree = "<group>"; };
 		BF6EBBA72B20712600CD13FB /* selfie_segmenter.tflite */ = {isa = PBXFileReference; lastKnownFileType = file; path = selfie_segmenter.tflite; sourceTree = "<group>"; };
+		BF7CB7402BE9C97F00059D55 /* CVPixelBufferExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CVPixelBufferExtension.swift; sourceTree = "<group>"; };
 		CB81BA1A32936BF6829D8CD6 /* Pods_ImageSegmenter.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_ImageSegmenter.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		D95B4C9DB808B140005D1F61 /* libPods-ImageSegmenterUITests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-ImageSegmenterUITests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -105,6 +107,7 @@
 		BF6EBB4D2B1EB5BE00CD13FB /* ImageSegmenter */ = {
 			isa = PBXGroup;
 			children = (
+				BF7CB7412BE9C97F00059D55 /* Extensions */,
 				BF6EBB872B1EB75B00CD13FB /* Configurations */,
 				BF6EBB812B1EB75B00CD13FB /* Services */,
 				BF6EBB852B1EB75B00CD13FB /* Units */,
@@ -166,6 +169,14 @@
 				BF6EBB8E2B1EB75B00CD13FB /* CameraViewController.swift */,
 			);
 			path = ViewContoller;
+			sourceTree = "<group>";
+		};
+		BF7CB7412BE9C97F00059D55 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				BF7CB7402BE9C97F00059D55 /* CVPixelBufferExtension.swift */,
+			);
+			path = Extensions;
 			sourceTree = "<group>";
 		};
 		CA201CA7C3CA7FC43CD98251 /* Frameworks */ = {
@@ -296,6 +307,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				BF6EBB982B1EB75B00CD13FB /* RootViewController.swift in Sources */,
+				BF7CB7422BE9C97F00059D55 /* CVPixelBufferExtension.swift in Sources */,
 				BF6EBBA62B2070F000CD13FB /* RenderToMtlViewShaders.metal in Sources */,
 				BF6EBBA22B20531800CD13FB /* SegmentedImageRenderer.swift in Sources */,
 				BF6EBB912B1EB75B00CD13FB /* ImageSegmenterService.swift in Sources */,

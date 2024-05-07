@@ -16,7 +16,7 @@
 import UIKit
 
 protocol InferenceResultDeliveryDelegate: AnyObject {
-  func didPerformInference(result: ResultBundle?)
+  func didPerformInference(result: Result?)
 }
 
 /** The view controller is responsible for presenting and handling the tabbed controls for switching between the live camera feed and
@@ -164,7 +164,7 @@ extension RootViewController: UITabBarDelegate {
 
 // MARK: InferenceResultDeliveryDelegate Methods
 extension RootViewController: InferenceResultDeliveryDelegate {
-  func didPerformInference(result: ResultBundle?) {
+  func didPerformInference(result: Result?) {
     var inferenceTimeString = ""
     
     if let inferenceTime = result?.inferenceTime {

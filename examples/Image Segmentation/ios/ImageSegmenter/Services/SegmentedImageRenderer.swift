@@ -19,7 +19,7 @@ import Metal
 import UIKit
 import MetalPerformanceShaders
 import MetalKit
-import TensorFlowLiteTaskVision
+import TensorFlowLite
 
 class SegmentedImageRenderer {
 
@@ -106,7 +106,7 @@ class SegmentedImageRenderer {
     isPrepared = false
   }
 
-  func render(image: UIImage, categoryMask: CategoryMask) -> UIImage? {
+  func render(image: UIImage, outputTensoft: Tensor) -> UIImage? {
 
     var newPixelBuffer: CVPixelBuffer?
     CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, outputPixelBufferPool!, &newPixelBuffer)
@@ -136,39 +136,44 @@ class SegmentedImageRenderer {
       return nil
     }
 
-    commandEncoder.label = "Demo Metal"
+    commandEncoder.label = "Metal Shader"
     commandEncoder.setComputePipelineState(computePipelineState!)
     commandEncoder.setTexture(inputTexture, index: 0)
     commandEncoder.setTexture(outputTexture, index: 1)
-    let buffer = metalDevice.makeBuffer(bytes: categoryMask.mask, length: categoryMask.width * categoryMask.height * MemoryLayout<UInt8>.size)!
-    commandEncoder.setBuffer(buffer, offset: 0, index: 0)
-    var markWidth: Int = categoryMask.width
-    var markHeight: Int = categoryMask.width
-    commandEncoder.setBytes(&markWidth, length: MemoryLayout<Int>.size, index: 1)
-    commandEncoder.setBytes(&markHeight, length: MemoryLayout<Int>.size, index: 2)
+    outputTensoft.data.withUnsafeBytes { rawBufferPointer in
+      let rawPtr = rawBufferPointer.baseAddress!
+      let buffer = metalDevice.makeBuffer(bytes: rawPtr, length: outputTensoft.shape.dimensions[1] * outputTensoft.shape.dimensions[2] * outputTensoft.shape.dimensions[3] * MemoryLayout<Float32>.size)!
+      commandEncoder.setBuffer(buffer, offset: 0, index: 0)
 
-    // Set up the thread groups.
-    let width = computePipelineState!.threadExecutionWidth
-    let height = computePipelineState!.maxTotalThreadsPerThreadgroup / width
-    let threadsPerThreadgroup = MTLSizeMake(width, height, 1)
-    let threadgroupsPerGrid = MTLSize(width: (inputTexture.width + width - 1) / width,
-                                      height: (inputTexture.height + height - 1) / height,
-                                      depth: 1)
-    commandEncoder.dispatchThreadgroups(threadgroupsPerGrid, threadsPerThreadgroup: threadsPerThreadgroup)
+      var markWidth: Int = outputTensoft.shape.dimensions[1]
+      var markHeight: Int = outputTensoft.shape.dimensions[2]
+      var classCount: Int = outputTensoft.shape.dimensions[3]
+      commandEncoder.setBytes(&markWidth, length: MemoryLayout<Int>.size, index: 1)
+      commandEncoder.setBytes(&markHeight, length: MemoryLayout<Int>.size, index: 2)
+      commandEncoder.setBytes(&classCount, length: MemoryLayout<Int>.size, index: 3)
 
-    commandEncoder.endEncoding()
-    commandBuffer.commit()
-    commandBuffer.waitUntilCompleted()
+      // Set up the thread groups.
+      let width = computePipelineState!.threadExecutionWidth
+      let height = computePipelineState!.maxTotalThreadsPerThreadgroup / width
+      let threadsPerThreadgroup = MTLSizeMake(width, height, 1)
+      let threadgroupsPerGrid = MTLSize(width: (inputTexture.width + width - 1) / width,
+                                        height: (inputTexture.height + height - 1) / height,
+                                        depth: 1)
+      commandEncoder.dispatchThreadgroups(threadgroupsPerGrid, threadsPerThreadgroup: threadsPerThreadgroup)
+
+      commandEncoder.endEncoding()
+      commandBuffer.commit()
+      commandBuffer.waitUntilCompleted()
+    }
     guard let ciImage = CIImage(mtlTexture: outputTexture) else { return nil }
     let newCiimage = ciImage.transformed(by: ciImage.orientationTransform(for: .downMirrored))
     return UIImage(ciImage: newCiimage)
-
   }
 
   /**
    This method merge frame of video with backgroud image using segment data and return an pixel buffer
    **/
-  func render(ciImage: CIImage, categoryMask: CategoryMask) -> CVPixelBuffer? {
+  func render(ciImage: CIImage, outputTensoft: Tensor) -> CVPixelBuffer? {
 
     guard isPrepared else {
       return nil
@@ -203,37 +208,40 @@ class SegmentedImageRenderer {
       return nil
     }
 
-    commandEncoder.label = "Demo Metal"
+    commandEncoder.label = "Metal Shader"
     commandEncoder.setComputePipelineState(computePipelineState!)
     commandEncoder.setTexture(inputTexture, index: 0)
     commandEncoder.setTexture(outputTexture, index: 1)
-    let buffer = metalDevice.makeBuffer(bytes: categoryMask.mask, length: categoryMask.width * categoryMask.height * MemoryLayout<UInt8>.size)!
-    commandEncoder.setBuffer(buffer, offset: 0, index: 0)
-    var markWidth: Int = categoryMask.width
-    var markHeight: Int = categoryMask.width
-    commandEncoder.setBytes(&markWidth, length: MemoryLayout<Int>.size, index: 1)
-    commandEncoder.setBytes(&markHeight, length: MemoryLayout<Int>.size, index: 2)
+    
+    outputTensoft.data.withUnsafeBytes { rawBufferPointer in
+      let rawPtr = rawBufferPointer.baseAddress!
+      let buffer = metalDevice.makeBuffer(bytes: rawPtr, length: outputTensoft.shape.dimensions[1] * outputTensoft.shape.dimensions[2] * outputTensoft.shape.dimensions[3] * MemoryLayout<Float32>.size)!
+      commandEncoder.setBuffer(buffer, offset: 0, index: 0)
 
-    // Set up the thread groups.
-    let width = computePipelineState!.threadExecutionWidth
-    let height = computePipelineState!.maxTotalThreadsPerThreadgroup / width
-    let threadsPerThreadgroup = MTLSizeMake(width, height, 1)
-    let threadgroupsPerGrid = MTLSize(width: (inputTexture.width + width - 1) / width,
-                                      height: (inputTexture.height + height - 1) / height,
-                                      depth: 1)
-    commandEncoder.dispatchThreadgroups(threadgroupsPerGrid, threadsPerThreadgroup: threadsPerThreadgroup)
+      var markWidth: Int = outputTensoft.shape.dimensions[1]
+      var markHeight: Int = outputTensoft.shape.dimensions[2]
+      var classCount: Int = outputTensoft.shape.dimensions[3]
+      commandEncoder.setBytes(&markWidth, length: MemoryLayout<Int>.size, index: 1)
+      commandEncoder.setBytes(&markHeight, length: MemoryLayout<Int>.size, index: 2)
+      commandEncoder.setBytes(&classCount, length: MemoryLayout<Int>.size, index: 3)
 
-    commandEncoder.endEncoding()
-    commandBuffer.commit()
-    commandBuffer.waitUntilCompleted()
+      // Set up the thread groups.
+      let width = computePipelineState!.threadExecutionWidth
+      let height = computePipelineState!.maxTotalThreadsPerThreadgroup / width
+      let threadsPerThreadgroup = MTLSizeMake(width, height, 1)
+      let threadgroupsPerGrid = MTLSize(width: (inputTexture.width + width - 1) / width,
+                                        height: (inputTexture.height + height - 1) / height,
+                                        depth: 1)
+      commandEncoder.dispatchThreadgroups(threadgroupsPerGrid, threadsPerThreadgroup: threadsPerThreadgroup)
+
+      commandEncoder.endEncoding()
+      commandBuffer.commit()
+      commandBuffer.waitUntilCompleted()
+    }
     return outputPixelBuffer
   }
 
-  func render(pixelBuffer: CVPixelBuffer, categoryMask: CategoryMask) -> CVPixelBuffer? {
-    guard isPrepared else {
-      print("segmentDatas not found")
-      return nil
-    }
+  func render(pixelBuffer: CVPixelBuffer, outputTensoft: Tensor) -> CVPixelBuffer? {
 
     var newPixelBuffer: CVPixelBuffer?
     CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, outputPixelBufferPool!, &newPixelBuffer)
@@ -245,7 +253,6 @@ class SegmentedImageRenderer {
           let outputTexture = makeTextureFromCVPixelBuffer(pixelBuffer: outputPixelBuffer, textureFormat: .bgra8Unorm) else {
       return nil
     }
-
     let textureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .bgra8Unorm, width: inputTexture.width, height: inputTexture.height, mipmapped: false)
     textureDescriptor.usage = .unknown
 
@@ -257,101 +264,40 @@ class SegmentedImageRenderer {
       CVMetalTextureCacheFlush(textureCache!, 0)
       return nil
     }
-
-    commandEncoder.label = "Demo Metal"
+    
+    commandEncoder.label = "Metal Shader"
     commandEncoder.setComputePipelineState(computePipelineState!)
     commandEncoder.setTexture(inputTexture, index: 0)
     commandEncoder.setTexture(outputTexture, index: 1)
-    let buffer = metalDevice.makeBuffer(bytes: categoryMask.mask, length: categoryMask.width * categoryMask.height * MemoryLayout<UInt8>.size)!
-    commandEncoder.setBuffer(buffer, offset: 0, index: 0)
-    var markWidth: Int = categoryMask.width
-    var markHeight: Int = categoryMask.width
-    commandEncoder.setBytes(&markWidth, length: MemoryLayout<Int>.size, index: 1)
-    commandEncoder.setBytes(&markHeight, length: MemoryLayout<Int>.size, index: 2)
 
-    // Set up the thread groups.
-    let width = computePipelineState!.threadExecutionWidth
-    let height = computePipelineState!.maxTotalThreadsPerThreadgroup / width
-    let threadsPerThreadgroup = MTLSizeMake(width, height, 1)
-    let threadgroupsPerGrid = MTLSize(width: (inputTexture.width + width - 1) / width,
-                                      height: (inputTexture.height + height - 1) / height,
-                                      depth: 1)
-    commandEncoder.dispatchThreadgroups(threadgroupsPerGrid, threadsPerThreadgroup: threadsPerThreadgroup)
+    outputTensoft.data.withUnsafeBytes { rawBufferPointer in
+      let rawPtr = rawBufferPointer.baseAddress!
+      let buffer = metalDevice.makeBuffer(bytes: rawPtr, length: outputTensoft.shape.dimensions[1] * outputTensoft.shape.dimensions[2] * outputTensoft.shape.dimensions[3] * MemoryLayout<Float32>.size)!
+      commandEncoder.setBuffer(buffer, offset: 0, index: 0)
+      var markWidth: Int = outputTensoft.shape.dimensions[1]
+      var markHeight: Int = outputTensoft.shape.dimensions[2]
+      var classCount: Int = outputTensoft.shape.dimensions[3]
+      commandEncoder.setBytes(&markWidth, length: MemoryLayout<Int>.size, index: 1)
+      commandEncoder.setBytes(&markHeight, length: MemoryLayout<Int>.size, index: 2)
+      commandEncoder.setBytes(&classCount, length: MemoryLayout<Int>.size, index: 3)
 
-    commandEncoder.endEncoding()
-    commandBuffer.commit()
+      // Set up the thread groups.
+      let width = computePipelineState!.threadExecutionWidth
+      let height = computePipelineState!.maxTotalThreadsPerThreadgroup / width
+      let threadsPerThreadgroup = MTLSizeMake(width, height, 1)
+      let threadgroupsPerGrid = MTLSize(width: (inputTexture.width + width - 1) / width,
+                                        height: (inputTexture.height + height - 1) / height,
+                                        depth: 1)
+      commandEncoder.dispatchThreadgroups(threadgroupsPerGrid, threadsPerThreadgroup: threadsPerThreadgroup)
+      commandEncoder.endEncoding()
+      commandBuffer.commit()
+    }
     return outputPixelBuffer
   }
 
   func getCGImmage(ciImage: CIImage) -> CGImage {
     guard let cgImage = context.createCGImage(ciImage, from: ciImage.extent) else { fatalError("error") }
     return cgImage
-  }
-
-  func resizeTexture(sourceTexture: MTLTexture, desTexture: MTLTexture, targetSize:MTLSize, resizeMode: UIView.ContentMode) {
-    guard let queue = self.commandQueue,
-          let commandBuffer = queue.makeCommandBuffer() else {
-      print("FrameMixer resizeTexture command buffer create failed")
-      return
-    }
-
-    let device = queue.device;
-
-    // Scale texture
-    let sourceWidth = sourceTexture.width
-    let sourceHeight = sourceTexture.height
-    let widthRatio: Double = Double(targetSize.width) / Double(sourceWidth)
-    let heightRatio: Double = Double(targetSize.height) / Double(sourceHeight)
-    var scaleX: Double = 0;
-    var scaleY: Double  = 0;
-    var translateX: Double = 0;
-    var translateY: Double = 0;
-    if resizeMode == .scaleToFill {
-      //ScaleFill
-      scaleX = Double(targetSize.width) / Double(sourceWidth)
-      scaleY = Double(targetSize.height) / Double(sourceHeight)
-
-    } else if resizeMode == .scaleAspectFit {
-      //AspectFit
-      if heightRatio > widthRatio {
-        scaleX = Double(targetSize.width) / Double(sourceWidth)
-        scaleY = scaleX
-        let currentHeight = Double(sourceHeight) * scaleY
-        translateY = (Double(targetSize.height) - currentHeight) * 0.5
-      } else {
-        scaleY = Double(targetSize.height) / Double(sourceHeight)
-        scaleX = scaleY
-        let currentWidth = Double(sourceWidth) * scaleX
-        translateX = (Double(targetSize.width) - currentWidth) * 0.5
-      }
-    } else if resizeMode == .scaleAspectFill {
-      //AspectFill
-      if heightRatio > widthRatio {
-        scaleY = Double(targetSize.height) / Double(sourceHeight)
-        scaleX = scaleY
-        let currentWidth = Double(sourceWidth) * scaleX
-        translateX = (Double(targetSize.width) - currentWidth) * 0.5
-
-      } else {
-        scaleX = Double(targetSize.width) / Double(sourceWidth)
-        scaleY = scaleX
-        let currentHeight = Double(sourceHeight) * scaleY
-        translateY = (Double(targetSize.height) - currentHeight) * 0.5
-      }
-    }
-    var transform = MPSScaleTransform(scaleX: scaleX, scaleY: scaleY, translateX: translateX, translateY: translateY)
-    if #available(iOS 11.0, *) {
-      let scale = MPSImageBilinearScale.init(device: device)
-      withUnsafePointer(to: &transform) { (transformPtr: UnsafePointer<MPSScaleTransform>) -> () in
-        scale.scaleTransform = transformPtr
-        scale.encode(commandBuffer: commandBuffer, sourceTexture: sourceTexture, destinationTexture: desTexture)
-      }
-    } else {
-      print("Frame mixer resizeTexture failed, only support iOS 11.0")
-    }
-
-    commandBuffer.commit()
-    commandBuffer.waitUntilCompleted()
   }
 
   func makeTextureFromCVPixelBuffer(pixelBuffer: CVPixelBuffer, textureFormat: MTLPixelFormat) -> MTLTexture? {
@@ -507,8 +453,7 @@ private func preallocateBuffers(pool: CVPixelBufferPool, allocationThreshold: In
 }
 
 extension UIImage {
-
-
+  
   func fixedOrientation() -> CGImage? {
 
     guard let cgImage = self.cgImage else {
