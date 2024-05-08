@@ -32,7 +32,6 @@ class ImageSegmenterService: NSObject {
 
   // MARK: - Custom Initializer
   init?(model: Model) {
-    guard let modelPath = model.modelPath else { return nil }
     self.model = model
     super.init()
 
@@ -57,7 +56,6 @@ class ImageSegmenterService: NSObject {
     } catch let error {
       print("Failed to create the interpreter with error: \(error.localizedDescription)")
     }
-    // Load the classes listed in the labels file.
   }
 
   // MARK: - Segmention Methods for Different Modes
