@@ -24,15 +24,12 @@ class ViewController: UIViewController {
   private var audioClassificationHelper: AudioClassificationHelper!
 
   private var model: Model = DefaultConstants.model
-  private var overLap: Double = DefaultConstants.overLap
   private var maxResults: Int = DefaultConstants.maxResults
   private var threshold: Float = DefaultConstants.threshold
   private var threadCount: Int = DefaultConstants.threadCount
 
   private var result: Result?
   private var audioInputManager: AudioInputManager!
-  private var bufferSize: Int = 0
-  private var channelDataWithBuffer: [Int16] = []
 
   override func viewDidLoad() {
     super.viewDidLoad()
@@ -46,10 +43,8 @@ class ViewController: UIViewController {
   /// Initializes the AudioInputManager and starts recognizing on the output buffers.
   private func startAudioRecognition() {
     audioInputManager?.stop()
-    audioInputManager = AudioInputManager(sampleRate: audioClassificationHelper.sampleRate, ovelap: overLap)
+    audioInputManager = AudioInputManager(sampleRate: audioClassificationHelper.sampleRate)
     audioInputManager.delegate = self
-
-    bufferSize = audioInputManager.bufferSize
 
     audioInputManager.checkPermissionsAndStartTappingMicrophone()
   }
@@ -60,8 +55,6 @@ class ViewController: UIViewController {
 
   /// Start a new audio classification routine.
   private func restartClassifier() {
-
-    channelDataWithBuffer = []
     // Create a new classifier instance.
     audioClassificationHelper = AudioClassificationHelper(
       model: model,
@@ -158,17 +151,13 @@ extension ViewController: AudioInputManagerDelegate {
     _ audioInputManager: AudioInputManager,
     didCaptureChannelData channelData: [Int16]
   ) {
-    channelDataWithBuffer.append(contentsOf: channelData)
     let sampleRate = audioClassificationHelper.sampleRate
-    if channelDataWithBuffer.count < sampleRate {
-      print("audio data are not enough")
+    if channelData.count != sampleRate {
+      print("audio data count is not equal sample rate")
       return
     }
-    self.runModel(inputBuffer: Array(channelDataWithBuffer[(channelDataWithBuffer.count - sampleRate)..<channelDataWithBuffer.count]))
-    print(channelDataWithBuffer.count)
-    if channelDataWithBuffer.count > channelDataWithBuffer.count - sampleRate {
-      channelDataWithBuffer.removeFirst(channelDataWithBuffer.count - sampleRate)
-    }
+    self.runModel(inputBuffer: channelData)
+    print(channelData.count)
   }
 }
 
@@ -178,8 +167,6 @@ extension ViewController: InferenceViewDelegate {
     switch action {
     case .changeModel(let model):
       self.model = model
-    case .changeOverlap(let overLap):
-      self.overLap = overLap
     case .changeMaxResults(let maxResults):
       self.maxResults = maxResults
     case .changeScoreThreshold(let threshold):

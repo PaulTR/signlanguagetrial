@@ -22,7 +22,6 @@ public protocol AudioInputManagerDelegate: AnyObject {
 
 public class AudioInputManager {
   // MARK: - Constants
-  public let bufferSize: Int
 
   private let sampleRate: Int
   private let conversionQueue = DispatchQueue(label: "conversionQueue")
@@ -34,9 +33,8 @@ public class AudioInputManager {
 
   // MARK: - Methods
 
-  public init(sampleRate: Int, ovelap: Double) {
+  public init(sampleRate: Int) {
     self.sampleRate = sampleRate
-    self.bufferSize = Int(Double(sampleRate) * (1.0 - ovelap))
   }
 
   public func checkPermissionsAndStartTappingMicrophone() {
@@ -75,7 +73,7 @@ public class AudioInputManager {
     ), let formatConverter = AVAudioConverter(from:inputFormat, to: recordingFormat) else { return }
 
     // installs a tap on the audio engine and specifying the buffer size and the input format.
-    inputNode.installTap(onBus: 0, bufferSize: AVAudioFrameCount(bufferSize), format: inputFormat) {
+    inputNode.installTap(onBus: 0, bufferSize: AVAudioFrameCount(sampleRate), format: inputFormat) {
       buffer, _ in
 
       self.conversionQueue.async {
@@ -83,7 +81,7 @@ public class AudioInputManager {
         // for the model.(pcm 16)
         guard let pcmBuffer = AVAudioPCMBuffer(
           pcmFormat: recordingFormat,
-          frameCapacity: AVAudioFrameCount(self.bufferSize)
+          frameCapacity: AVAudioFrameCount(self.sampleRate)
         ) else { return }
 
         var error: NSError?

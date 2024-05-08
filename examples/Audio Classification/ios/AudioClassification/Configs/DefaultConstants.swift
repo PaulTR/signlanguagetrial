@@ -44,7 +44,6 @@ enum Model: String, CaseIterable {
 
 struct DefaultConstants {
   static var model: Model = .Yamnet
-  static var overLap: Double = 0.5
   static var maxResults: Int = 3
   static var threshold: Float = 0.3
   static var threadCount: Int = 2
