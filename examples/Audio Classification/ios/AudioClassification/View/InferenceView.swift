@@ -24,7 +24,6 @@ class InferenceView: UIView {
 
   enum Action {
     case changeModel(Model)
-    case changeOverlap(Double)
     case changeMaxResults(Int)
     case changeScoreThreshold(Float)
     case changeThreadCount(Int)
@@ -33,11 +32,9 @@ class InferenceView: UIView {
   var delegate: InferenceViewDelegate?
 
   @IBOutlet weak var inferenceTimeLabel: UILabel!
-  @IBOutlet weak var overlabLabel: UILabel!
   @IBOutlet weak var maxResulteLabel: UILabel!
   @IBOutlet weak var thresholdLabel: UILabel!
   @IBOutlet weak var threadsLabel: UILabel!
-  @IBOutlet weak var overLapStepper: UIStepper!
   @IBOutlet weak var maxResultsStepper: UIStepper!
   @IBOutlet weak var thresholdStepper: UIStepper!
   @IBOutlet weak var threadsStepper: UIStepper!
@@ -64,19 +61,12 @@ class InferenceView: UIView {
     choseModelButton.showsMenuAsPrimaryAction = true
     choseModelButton.changesSelectionAsPrimaryAction = true
 
-    overlabLabel.text = "\(Int(DefaultConstants.overLap * 100))%"
-    overLapStepper.value = DefaultConstants.overLap
     maxResulteLabel.text = "\(DefaultConstants.maxResults)"
     maxResultsStepper.value = Double(DefaultConstants.maxResults)
     thresholdLabel.text = String(format: "%.1f", DefaultConstants.threshold)
     thresholdStepper.value = Double(DefaultConstants.threshold)
     threadsLabel.text = "\(DefaultConstants.threadCount)"
     threadsStepper.value = Double(DefaultConstants.threadCount)
-  }
-
-  @IBAction func overlapStepperValueChanged(_ sender: UIStepper) {
-    overlabLabel.text = String(format: "%.0f", sender.value * 100) + "%"
-    delegate?.view(self, needPerformActions: .changeOverlap(sender.value))
   }
 
   @IBAction func maxResultsStepperValueChanged(_ sender: UIStepper) {

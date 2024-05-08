@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import UIKit
-import TensorFlowLiteTaskAudio
 
 /// TableViewCell to display the inference results. Each cell corresponds to a single category.
 class ResultTableViewCell: UITableViewCell {
@@ -21,11 +20,11 @@ class ResultTableViewCell: UITableViewCell {
   @IBOutlet weak var nameLabel: UILabel!
   @IBOutlet weak var scoreWidthLayoutConstraint: NSLayoutConstraint!
 
-  func setData(_ data: ClassificationCategory) {
+  func setData(_ data: Category) {
     nameLabel.text = data.label
-    if !data.score.isNaN {
+    if !data.probability.isNaN {
       // score view width is equal 1/4 screen with
-      scoreWidthLayoutConstraint.constant = UIScreen.main.bounds.width/4*CGFloat(data.score)
+      scoreWidthLayoutConstraint.constant = UIScreen.main.bounds.width/4*CGFloat(data.probability)
     } else {
       scoreWidthLayoutConstraint.constant = 0
     }
