@@ -69,9 +69,10 @@ class ViewController: UIViewController {
 
   /// Action when user tap the "Classify" button.
   @IBAction func classifyButtonTouchupInside(_ sender: Any) {
-        guard let text = inputTextView.text,
-              text.isEmpty == false else { return }
-        classify(text: text)
+    inputTextView.resignFirstResponder()
+    guard let text = inputTextView.text,
+          text.isEmpty == false else { return }
+    classify(text: text)
   }
 
   @IBAction func showHidenButtonTouchUpInside(_ sender: UIButton) {
