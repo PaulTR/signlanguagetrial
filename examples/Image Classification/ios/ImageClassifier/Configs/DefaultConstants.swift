@@ -39,4 +39,15 @@ enum Model: String, CaseIterable {
                 forResource: "efficientnet_lite2", ofType: "tflite")
         }
     }
+
+  var labelPath: String? {
+      switch self {
+      case .efficientnetLite0:
+          return Bundle.main.path(
+              forResource: "labels", ofType: "txt")
+      case .efficientnetLite2:
+          return Bundle.main.path(
+              forResource: "labels", ofType: "txt")
+      }
+  }
 }

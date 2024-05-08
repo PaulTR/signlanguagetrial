@@ -22,7 +22,7 @@ protocol CameraFeedServiceDelegate: AnyObject {
   /**
    This method delivers the pixel buffer of the current frame seen by the device's camera.
    */
-  func didOutput(sampleBuffer: CMSampleBuffer, orientation: UIImage.Orientation)
+  func didOutput(pixelBuffer: CVPixelBuffer, orientation: UIImage.Orientation)
 
   /**
    This method initimates that a session runtime error occured.
@@ -374,11 +374,14 @@ extension CameraFeedService: AVCaptureVideoDataOutputSampleBufferDelegate {
   /** This method delegates the CVPixelBuffer of the frame seen by the camera currently.
    */
   func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
-      let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)!
-      if (imageBufferSize == nil) {
-        imageBufferSize = CGSize(width: CVPixelBufferGetHeight(imageBuffer), height: CVPixelBufferGetWidth(imageBuffer))
-      }
-    delegate?.didOutput(sampleBuffer: sampleBuffer, orientation: UIImage.Orientation.from(deviceOrientation: UIDevice.current.orientation))
+    // Converts the CMSampleBuffer to a CVPixelBuffer.
+    let pixelBuffer: CVPixelBuffer? = CMSampleBufferGetImageBuffer(sampleBuffer)
+
+    guard let imagePixelBuffer = pixelBuffer else {
+      return
+    }
+    // Delegates the pixel buffer to the ViewController.
+    delegate?.didOutput(pixelBuffer: imagePixelBuffer, orientation: UIImage.Orientation.from(deviceOrientation: UIDevice.current.orientation))
   }
 }
 
