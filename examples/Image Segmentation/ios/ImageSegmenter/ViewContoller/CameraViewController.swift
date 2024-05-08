@@ -183,22 +183,15 @@ extension CameraViewController: CameraFeedServiceDelegate {
     self.formatDescription = formatDescription
     if isRunning { return }
     backgroundQueue.async { [weak self] in
-      self?.isRunning = true
-      self?.imageSegmenterService?.segmentAsync(sampleBuffer: sampleBuffer, completion: { result in
-        guard let self else { return }
+      guard let self else { return }
+      self.isRunning = true
+      self.imageSegmenterService?.segmentAsync(pixelBuffer: videoPixelBuffer, completion: { result in
         self.isRunning = false
-        guard let result = result,
-              let imageSegmenterResult = result.imageSegmenterResults.first,
-              let segmentation = imageSegmenterResult?.segmentations.first,
-              let categoryMask = segmentation.categoryMask else { return }
-//        let a = UnsafeMutableBufferPointer(start: categoryMask.mask, count: 257 * 257)
-//        print(a.filter({$0 == 15}).count)
-//        print(a.filter({$0 == 0}).count)
+        guard let result = result else { return }
         if !self.render.isPrepared {
           self.render.prepare(with: formatDescription, outputRetainedBufferCountHint: 3)
         }
-
-        let outputPixelBuffer = self.render.render(pixelBuffer: videoPixelBuffer, categoryMask: categoryMask)
+        let outputPixelBuffer = self.render.render(pixelBuffer: videoPixelBuffer, outputTensoft: result.outputTensor)
         self.previewView.pixelBuffer = outputPixelBuffer
         self.inferenceResultDeliveryDelegate?.didPerformInference(result: result)
       })
